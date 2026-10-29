@@ -13,7 +13,7 @@
 首次把命令行工具安装到 npm 的全局目录：
 
 ```sh
-npm install --global https://codeload.github.com/Blank-Tea/design-to-handoff/tar.gz/refs/tags/v0.5.0
+npm install --global https://codeload.github.com/Blank-Tea/design-to-handoff/tar.gz/refs/tags/v0.6.0
 ```
 
 再选择要安装技能的智能体：
@@ -37,7 +37,7 @@ design-to-handoff update
 仍保留一次性 npx 入口：
 
 ```sh
-npx --yes https://codeload.github.com/Blank-Tea/design-to-handoff/tar.gz/refs/tags/v0.5.0
+npx --yes https://codeload.github.com/Blank-Tea/design-to-handoff/tar.gz/refs/tags/v0.6.0
 ```
 
 一次性入口不会永久注册终端命令；推荐使用全局安装获得 update。
@@ -84,7 +84,7 @@ design-to-handoff --agents codex,claude-code,codebuddy --yes
 - OpenCode：通过其原生 skill 加载机制，或直接说“请加载 design-to-handoff”；无须读取 openai.yaml。
 - Cursor 或其他兼容宿主：按其技能界面选择，或用自然语言指定技能名称。
 
-安装只放置技能说明和验收脚本，不替你安装/授权 Figma 或 Penpot MCP，不含任何作者账号或密钥。每位使用者使用自己的账号，在平台选择阶段连接。无需作者电脑上的路径、配置或文件。
+首次安装只放置技能说明、维护信息和验收脚本，不含作者账号或密钥。实际运行到上传阶段会发现可用平台工具、启动连接并引导必要授权；平台仍须提供可用的浏览器/写入能力。每位使用者使用自己的账号，在平台选择阶段通过问答完成连接；后续文件操作由智能体执行。无需作者电脑上的路径、配置或文件。
 
 ## 为什么存在 agents/openai.yaml
 
@@ -97,6 +97,16 @@ design-to-handoff --agents codex,claude-code,codebuddy --yes
 【需求文档｜必填】 → 【补充文档｜可选、可跳过】 → 浓缩需求 → 风格、字体、字号、圆角、配色 → 可选网站或截图 → 可选本地保存 → 设计文档与预览 → 选择 Figma / Penpot / 两者 → 连接与目标位置 → 上传及标注验收 → 真实结果链接。
 
 需求文档必须提供有效的文件、目录、链接或已给附件；补充文档可回答“无”或跳过。参考可跳过，设计方向可回答“你推荐”。明确选择不保留本地副本才不写交付目录；过程可以使用临时文件。
+
+## 选择平台后自动完成云端交付
+
+完成设计后选择 Figma 或 Penpot，再选择“新建设计”或“补充已有项目/文件”。未连接时，智能体启动真实的浏览器授权/登录或连接设置，并用原生问答等待“完成授权”；完成后实际探测连接，再自动创建文件、命名、构建/上传并读回。默认不要求你自己建目录、手动导入或改名。
+
+Penpot 官方远程 MCP 首次需要 MCP key。本技能会通过独立的【Penpot MCP 密钥】问答收集，优先秘密输入，然后配置所选宿主连接；不回显、不写入设计、仓库或交付记录。有效连接复用，不每次重新索取。普通网页登录和提供 key 不代表目标文件已可写，仍需验证并连接实际文件。
+
+补充已有项目时提供项目、文件或画板链接：项目默认新增独立文件，文件默认新增业务页面，画板默认在可用区域追加设计。先读已有样式/组件，保留旧内容；只有明确要求才更新指定节点。中断后复用真实 ID 续传，避免重复空文件。
+
+统一流程见[云端交付](skills/design-to-handoff/references/cloud-handoff.md)。宿主需实际具备浏览器/连接和云写入能力；缺失时会说明具体缺口并保留继续点。技能不能自行产生 OAuth 客户端或让仅有读取权限的连接获得写权限。
 
 ## 平台方案
 

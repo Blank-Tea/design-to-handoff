@@ -58,7 +58,7 @@ test('three selected agents receive one complete skill with internal modules; un
       const file = path.join(entry, item);
       for (const [, target] of (await fs.readFile(file, 'utf8')).matchAll(/\]\(([^)]+)\)/g)) {
         if (!/^(https?:|#)/.test(target)) {
-          const destination = path.resolve(path.dirname(file), target);
+          const destination = path.resolve(path.dirname(file), target.split("#")[0]);
           assert.equal(path.relative(entry, destination).startsWith('..'), false);
           await fs.access(destination);
         }
@@ -71,7 +71,7 @@ test('three selected agents receive one complete skill with internal modules; un
     for (const skill of SKILLS) {
       const file = path.join(agent.directory, skill, 'SKILL.md');
       for (const [, target] of (await fs.readFile(file, 'utf8')).matchAll(/\]\(([^)]+)\)/g)) {
-        if (!/^(https?:|#)/.test(target)) await fs.access(path.resolve(path.dirname(file), target));
+        if (!/^(https?:|#)/.test(target)) await fs.access(path.resolve(path.dirname(file), target.split("#")[0]));
       }
     }
     assert.equal((await fs.lstat(path.join(agent.directory, SKILLS[0]))).isSymbolicLink(), false);

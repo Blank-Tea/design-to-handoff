@@ -10,7 +10,9 @@
 - direction：每项具体数值及 user / recommendation / reference 来源。
 - references：结论、证据、实测/估计、是否采纳。
 - localSave：是否保留、用户目录。
-- platforms / deliveries：平台选择，各自目标、节点 ID、阶段、验证及链接。
+- platforms / deliveries：平台选择；deliveryMode（new/append/update）；目标类型、账号/团队、projectId/fileId/pageId/nodeId 与真实链接。
+- connection：每个平台的浏览器是否打开、awaiting_user/account_ready/target_ready 状态、用户完成事件、实际只读探测与可用写入路由；Penpot key 只记录“已配置/待配置”，不记录值或含凭证 URL。
+- plannedChanges / baseline / createdIds：本次追加/更新范围、既有内容基线、成功节点与待补 viewId；用于防覆盖及中断续传。
 
 ## 正式设计文档
 
