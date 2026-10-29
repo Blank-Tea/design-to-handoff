@@ -1,4 +1,0 @@
-interface:
-  display_name: "参考网站与截图分析"
-  short_description: "分析参考页面及截图的布局、字体和视觉语言，区分实测数据与估计"
-  default_prompt: "请使用 $design-reference-analysis 完成本次设计工作，并说明仍需用户输入的内容。"

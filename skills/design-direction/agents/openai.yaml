@@ -1,4 +1,0 @@
-interface:
-  display_name: "设计方向访谈"
-  short_description: "收集设计风格、字体、圆角和配色，将回答转为可执行的设计规范"
-  default_prompt: "请使用 $design-direction 完成本次设计工作，并说明仍需用户输入的内容。"

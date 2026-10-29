@@ -70,11 +70,11 @@ async function main() {
     if (!selected.length) { console.log('Cancelled; nothing installed.'); return; }
     const root = options.root ? path.resolve(options.root) : options.scope === 'global' ? homedir() : process.cwd();
     const plan = buildPlan(selected, { root, scope: options.scope, explicitRoot: Boolean(options.root) });
-    console.log(`\n将为 ${plan.length} 个智能体安装全部 ${SKILLS.length} 个技能：`);
+    console.log(`\n将为 ${plan.length} 个智能体安装 design-to-handoff 单入口（${SKILLS.length} 个技能）：`);
     plan.forEach(a => console.log(`  ${a.label}: ${a.directory}`));
     const conflicts = await findConflicts(plan);
     controller.signal.throwIfAborted();
-    if (conflicts.length) console.log(`\n发现 ${conflicts.length} 个同名技能，将备份后替换；其他技能不会改变。`);
+    if (conflicts.length) console.log(`\n发现 ${conflicts.length} 个本包现有入口，将先备份；主入口更新，旧六个子入口如存在则移出技能目录。其他技能不会改变。`);
     if (options.dryRun) { console.log('\nDry run; no files written.'); return; }
     if (!options.yes) {
       if (!terminal) throw new Error('Confirmation required: use --yes, or --dry-run to inspect. Nothing installed.');
@@ -91,6 +91,7 @@ async function main() {
     const source = fileURLToPath(new URL('../skills/', import.meta.url));
     const result = await install(source, plan, { allowReplace: true, signal: controller.signal });
     console.log(`\n安装完成：${result.agents.length} 个智能体，${result.installed} 个技能目录。`);
+    if (result.retired) console.log(`已将 ${result.retired} 个旧子入口移出技能目录并保存备份。`);
     if (result.backups.length) console.log('备份目录：\n' + [...new Set(result.backups.map(p => path.dirname(p)))].join('\n'));
     console.log('请刷新或重启智能体。Codex 使用 $design-to-handoff；Claude Code 使用 /design-to-handoff；其他宿主可直接说“使用 design-to-handoff”。\nFigma/Penpot MCP 由各使用者自行连接，本安装器不写入账号和授权配置。');
   } finally {

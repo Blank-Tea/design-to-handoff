@@ -1,8 +1,8 @@
 {
   "name": "design-to-handoff",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "private": true,
-  "description": "Interactive multi-agent installer for the Design to Handoff skill pack",
+  "description": "Single-entry design handoff skill with native questions across agent hosts",
   "type": "module",
   "bin": {
     "design-to-handoff": "bin/install.mjs"

@@ -3,7 +3,7 @@
 用于阶段衔接，不是用户表单。未选择本地保存时放会话内，选择保存可写 delivery/session.json。不写入凭证或含密钥 URL。
 
 - project / stage：项目名、当前阶段。
-- sources：来源 ID、实际文件/链接、版本、读取状态与原因。
+- sources：来源 ID、类型（必填需求/可选补充）、实际文件/链接、版本、读取状态与原因；分别记录需求题 pending/provided/invalid 与补充题 pending/provided/skipped，不能将补充 skipped 当成需求已提供。
 - requirements：稳定 REQ-001 等 ID、描述、来源定位、明确或假设。
 - views：稳定 viewId（页面+状态+终端）、关联需求、内容和必要交互。
 - conflicts / assumptions：冲突及影响、已说明的假设。

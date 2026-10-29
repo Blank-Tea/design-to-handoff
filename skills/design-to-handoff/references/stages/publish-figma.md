@@ -1,9 +1,6 @@
----
-name: design-publish-figma
-description: 将已生成的界面交付为 Figma 可编辑 Design 图层，优先免费 Code to canvas，核对云端属性、样式代码和多人查看。用于设计交付，不用于 Code Layer 或 Make 应用发布。
----
-
 # Figma 交付方案
+
+这是 design-to-handoff 的内部阶段说明。需要用户输入时遵守[内置问答约定](../interactive-input.md)，沿用当前阶段、待答问题和已有答案。
 
 只在用户选择 Figma 后上传。不默认购买会员，原始文档不上传。输入为已验收的源页面、规范、viewId 清单，以及明确或待选择的目标位置。
 
@@ -31,7 +28,7 @@ description: 将已生成的界面交付为 Figma 可编辑 Design 图层，优�
 
 ## 图层与数值验收
 
-按[共同验收标准](../design-compose/references/evidence.md)检查：
+按[共同验收标准](../evidence.md)检查：
 - 每个 viewId 对应的真实文件/画板 ID，以及文字、容器、图标等节点类型。
 - 独立文字仍是 TEXT，按钮文字可单独选中，无整页 UI 图片藏在交付画板内。
 - 读回关键文字的 font family/size/weight/line height/color，容器的边界、圆角、填充及可用布局属性；与设计规范比较。无法直接保留 padding/gap 时补布局说明并披露转换差异。

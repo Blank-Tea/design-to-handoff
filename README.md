@@ -2,7 +2,9 @@
 
 通过分步访谈，把需求文档与补充说明整理成设计文档，生成可检查元素属性的分层界面，并按选择交付到 Figma 或 Penpot。
 
-包含 1 个主 skill 和 6 个子 skill。安装后，AI 按阶段加载子 skill，不创建额外聊天或并发代理。
+只提供 **design-to-handoff 一个可见技能入口**。需求、设计方向、参考、设计生成、Figma/Penpot 交付继续分为六份内部说明，按阶段读取，不单独出现在技能列表中。
+
+**所有智能体采用同一交互规则**：优先调用宿主原生问答，选择题支持选项和自定义输入；先单独询问【需求文档｜必填】，再单独询问【补充文档｜可选、可跳过】。回答后自动继续，不要求再发送“继续”。Codex、Claude Code、CodeBuddy、Cursor、OpenCode 的差异仅是工具协议。当前模式确实没有原生问答时，须先说明能力限制，不能用文字菜单冒充控件。
 
 ## 一条命令，交互式多选安装
 
@@ -30,10 +32,10 @@ npx --yes https://codeload.github.com/Blank-Tea/design-to-handoff/tar.gz/refs/he
 
 选择页、确认页按一次 Ctrl+C 即取消，退出码为 130，不再反复向已关闭的 readline 提问。输入流关闭同样会取消；写入期间收到中断则先回滚，不保留半套技能。
 
-如果本机 npm 缓存仍运行旧的编号菜单，可使用固定修复版本入口：
+如果本机 npm 缓存仍运行旧的编号菜单，可使用固定最新版入口：
 
 ```text
-npx --yes https://codeload.github.com/Blank-Tea/design-to-handoff/tar.gz/refs/tags/v0.3.1
+npx --yes https://codeload.github.com/Blank-Tea/design-to-handoff/tar.gz/refs/tags/v0.4.0
 ```
 
 Windows 的 CMD 与 macOS 的 Terminal 可使用同一条命令。PowerShell 若提示 npx.ps1 被脚本策略禁止，将开头的 npx 改为 npx.cmd，其余参数不变；不需要修改执行策略。此入口直接下载 GitHub HTTPS 源码包，不依赖 Git 的 SSH 或凭证配置。
@@ -68,7 +70,7 @@ npx --yes https://codeload.github.com/Blank-Tea/design-to-handoff/tar.gz/refs/he
 
 最后的 `--yes` 才是安装器确认选项。只看计划不写文件可使用 `--agents codex,claude-code,codebuddy --dry-run`。可用 `--root` 指定自定义用户/项目根目录；未指定时自动发现，不需要填写个人路径。
 
-安装器永远把 7 个 skill 作为整体安装，保留主技能对子技能的相对引用。同名技能会先显示提醒，确认后备份到各智能体配置目录下 `.design-to-handoff-backups/`，再替换；无关技能不改变。中途失败会回滚已写入的技能。
+安装器只安装一个完整的 `design-to-handoff/` 目录，包含全部内部说明、问答适配和验收脚本。同名入口会先显示提醒，确认后备份到各智能体配置目录下 `.design-to-handoff-backups/` 再替换。从 0.3.x 及更早版本更新时，本包旧的六个子技能入口也会完整备份并移出技能目录，避免列表继续混乱；无关技能不改变。安装或迁移中途失败会恢复旧入口及原有内容。
 
 ### 安装后调用
 
@@ -86,13 +88,13 @@ npx --yes https://codeload.github.com/Blank-Tea/design-to-handoff/tar.gz/refs/he
 
 这是 Codex 的可选界面扩展，只有显示名称、简介和默认提示词，不是 OpenAI SDK、模型配置或运行依赖。通用入口是 SKILL.md；references/ 是按需阅读的补充文档，scripts/ 是按需执行的本地工具。此处 agents/ 不是多智能体安装目录，也不表示会启动额外 AI。
 
-其他宿主按其标准技能机制读取 SKILL.md。本包有自动化测试：从全部技能中移除 agents/ 后，仍能为五种目标安装 35 个完整技能目录。因此无须编造各宿主不识别的 claude.yaml、cursor.yaml 等文件。独立宿主能否完成实际设计上传，仍取决于其可用工具与授权，不能用安装通过代替端到端验证。
+其他宿主按其标准技能机制读取 SKILL.md。本包有自动化测试：移除可选 agents/ 后，仍能为五种目标各安装一个完整技能目录。因此无须编造各宿主不识别的 claude.yaml、cursor.yaml 等文件。独立宿主能否完成实际设计上传，仍取决于其可用工具与授权，不能用安装通过代替端到端验证。
 
 ## 工作流程
 
-需求文档和补充说明 → 浓缩需求 → 风格、字体、字号、圆角、配色 → 可选网站或截图 → 可选本地保存 → 设计文档与预览 → 选择 Figma / Penpot / 两者 → 连接与目标位置 → 上传及标注验收 → 真实结果链接。
+【需求文档｜必填】 → 【补充文档｜可选、可跳过】 → 浓缩需求 → 风格、字体、字号、圆角、配色 → 可选网站或截图 → 可选本地保存 → 设计文档与预览 → 选择 Figma / Penpot / 两者 → 连接与目标位置 → 上传及标注验收 → 真实结果链接。
 
-补充文档可为“无”，参考可跳过，设计方向可回答“你推荐”。不指定本地目录就不保留本地交付副本，过程可以使用临时文件。
+需求文档必须提供有效的文件、目录、链接或已给附件；补充文档可回答“无”或跳过。参考可跳过，设计方向可回答“你推荐”。明确选择不保留本地副本才不写交付目录；过程可以使用临时文件。
 
 ## 平台方案
 
@@ -105,37 +107,41 @@ npx --yes https://codeload.github.com/Blank-Tea/design-to-handoff/tar.gz/refs/he
 
 平台的账号、连接器、额度、字体和权限由使用者准备。免费指平台可用方案，不包含 AI 宿主或模型费用。当前未完成线上端到端上传与多账号验证，不把本地校验视为线上能力保证。
 
-## 子技能
+## 一个入口，六个内部阶段
 
-- `design-to-handoff`：主入口、顺序与状态。
-- `design-intake`：文档提炼。
-- `design-direction`：设计方向访谈。
-- `design-reference-analysis`：网站与截图分析。
-- `design-compose`：生成、真实图层要求与验收。
-- `design-publish-figma`：Figma 交付。
-- `design-publish-penpot`：Penpot 交付。
+唯一的技能清单是 `skills/design-to-handoff/SKILL.md`。内部阶段位于 `references/stages/`，文件是普通 Markdown，不注册为 skill：
+
+- `intake.md`：文档提炼。
+- `direction.md`：设计方向访谈。
+- `reference-analysis.md`：网站与截图分析。
+- `compose.md`：生成设计与图层检查。
+- `publish-figma.md` / `publish-penpot.md`：平台交付。
+
+所有阶段共用[内置问答契约](skills/design-to-handoff/references/interactive-input.md)，CodeBuddy 插件另有协议适配。交互期间只提示当前业务进度，不要求用户认识内部模块名。
 
 详细用法见[使用说明](使用说明.md)，验证边界见[验证记录](验证记录.md)。
 
 ## 更新与卸载
 
-重新执行同一安装命令，选择需要更新的智能体，核对并确认后安装当前仓库版本；原同名技能会保留备份。
+重新执行同一安装命令，选择需要更新的所有智能体，核对并确认后安装当前仓库版本；现有主入口和旧子入口会保留备份。每个宿主可能有独立目录，更新 Codex 不会自动更新 CodeBuddy/Claude Code 等副本，应在菜单中勾选实际使用的目标。
+
+需要固定获得本次版本、避免沿用缓存时，使用上面的 `v0.4.0` 地址。源码使用者可 `git pull --ff-only`，再运行 `node bin/install.mjs` 选择安装目标；只拉取源码不会替换已安装副本。
 
 卸载时只移除本包 skill，保留其他技能：
 
 ```sh
-npx --yes skills@1.7.4 remove --skill design-to-handoff design-intake design-direction design-reference-analysis design-compose design-publish-figma design-publish-penpot --agent codex claude-code codebuddy --global --yes
+npx --yes skills@1.7.4 remove --skill design-to-handoff --agent codex claude-code codebuddy --global --yes
 ```
 
 将 `--agent` 后面的名字改为实际需卸载的智能体；项目安装不带 `--global`。卸载不删除安装器保存的备份。
 
-OpenCode 的原生项目安装目录为 `.opencode/skills/`，与部分通用安装器采用的 `.agents/skills/` 不同。项目级卸载请在 OpenCode 的技能管理中处理，或只移除 `.opencode/skills/` 下本包列出的 7 个目录；不要假设上述通用卸载命令会找到原生项目目录。自定义根目录也应按实际安装计划处理。
+OpenCode 的原生项目安装目录为 `.opencode/skills/`，与部分通用安装器采用的 `.agents/skills/` 不同。项目级卸载请在 OpenCode 的技能管理中处理，或只移除 `.opencode/skills/` 下本包的 design-to-handoff 目录；不要假设上述通用卸载命令会找到原生项目目录。自定义根目录也应按实际安装计划处理。
 
 ## 系统兼容性
 
 安装器是纯 JavaScript：文件处理使用 Node.js 标准库，终端多选使用固定版本的 @clack/prompts，依赖随 npm 自动下载。无原生扩展、Bash/PowerShell 脚本、平台专用二进制和芯片相关依赖。技能正文使用通用 Agent Skills 格式；`agents/openai.yaml` 只是 Codex 可选界面元信息，其他宿主读取标准 SKILL.md。
 
-Windows x64、macOS Intel x64、macOS Apple Silicon arm64 的独立真实系统测试均已通过，包含安装器、npm 打包和验收脚本。[本次三平台通过记录](https://github.com/Blank-Tea/design-to-handoff/actions/runs/40813988394)。该测试验证文件安装和脚本执行，不代表所有智能体的在线设计工具都已端到端测试。持续状态见[跨平台测试](https://github.com/Blank-Tea/design-to-handoff/actions/workflows/portability.yml)和[验证记录](验证记录.md)。
+Windows x64、macOS Intel x64、macOS Apple Silicon arm64 通过仓库 Actions 持续验证安装器、npm 打包和验收脚本。此前版本的[三平台通过记录](https://github.com/Blank-Tea/design-to-handoff/actions/runs/40813988394)仅对应历史提交，0.4.0 结果请查看当前提交的 Actions。该测试验证文件安装和脚本执行，不代表所有智能体的在线设计工具都已端到端测试。持续状态见[跨平台测试](https://github.com/Blank-Tea/design-to-handoff/actions/workflows/portability.yml)和[验证记录](验证记录.md)。
 
 安装本身不需要 Python。运行可选交付验收脚本才需 Python 3.9+：Windows 用 `py -3` 或确认指向 Python 3 的 `python`，macOS 用 `python3`。执行技能的 AI 应先探测环境、选择可用命令，详见[运行兼容说明](skills/design-to-handoff/references/runtime-compatibility.md)。
 

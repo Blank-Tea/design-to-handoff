@@ -1,4 +1,4 @@
 interface:
   display_name: "需求到设计交付"
   short_description: "分步收集需求与设计方向，生成分层设计并交付 Figma 或 Penpot"
-  default_prompt: "请使用 $design-to-handoff 完成本次设计工作，并说明仍需用户输入的内容。"
+  default_prompt: "请使用 $design-to-handoff 完成本次设计工作，通过内置问答收集缺失信息，支持选项和自由输入，回答后自动继续。"

@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { spawn, spawnSync } from 'node:child_process';
 import { stripVTControlCharacters } from 'node:util';
-import { AGENTS, SKILLS, buildPlan, findConflicts, install, parseSelection } from '../lib/installer.mjs';
+import { AGENTS, SKILLS, LEGACY_SKILLS, buildPlan, findConflicts, install, parseSelection } from '../lib/installer.mjs';
 
 const source = fileURLToPath(new URL('../skills/', import.meta.url));
 const cli = fileURLToPath(new URL('../bin/install.mjs', import.meta.url));
@@ -41,12 +41,29 @@ test('macOS paths and explicit root, with environment overrides', () => {
   assert.equal(buildPlan(['codebuddy'], { root, scope: 'project', env: {}, pathApi: path.posix })[0].directory, '/profiles/design user/.codebuddy/skills');
 });
 
-test('three selected agents receive all seven skills with working sibling links; unselected remains absent', async () => sandbox(async parent => {
+test('three selected agents receive one complete skill with internal modules; unselected remains absent', async () => sandbox(async parent => {
   const root = path.join(parent, 'design user \u8bbe\u8ba1');
   const plan = buildPlan(['codex', 'claude-code', 'codebuddy'], { root, explicitRoot: true });
   const result = await install(source, plan);
-  assert.equal(result.installed, 21);
+  assert.equal(result.installed, 3);
+  assert.equal(result.retired, 0);
   for (const agent of plan) {
+    const entry = path.join(agent.directory, 'design-to-handoff');
+    assert.equal((await fs.readdir(agent.directory)).length, 1);
+    assert.equal((await fs.readdir(path.join(entry, 'references', 'stages'))).length, 6);
+    await fs.access(path.join(entry, 'scripts', 'verify_delivery.py'));
+    for (const item of await fs.readdir(entry, { recursive: true })) {
+      if (path.basename(item).toLowerCase() === 'skill.md') assert.equal(item, 'SKILL.md');
+      if (!item.endsWith('.md')) continue;
+      const file = path.join(entry, item);
+      for (const [, target] of (await fs.readFile(file, 'utf8')).matchAll(/\]\(([^)]+)\)/g)) {
+        if (!/^(https?:|#)/.test(target)) {
+          const destination = path.resolve(path.dirname(file), target);
+          assert.equal(path.relative(entry, destination).startsWith('..'), false);
+          await fs.access(destination);
+        }
+      }
+    }
     for (const name of SKILLS) {
       const actual = path.join(agent.directory, name, 'SKILL.md');
       assert.equal(await fs.readFile(actual, 'utf8'), await fs.readFile(path.join(source, name, 'SKILL.md'), 'utf8'));
@@ -72,8 +89,50 @@ test('existing same-name skills need consent, are backed up, and unrelated skill
   await assert.rejects(install(source, plan), /confirmation/);
   const result = await install(source, plan, { allowReplace: true });
   assert.equal(result.backups.length, 1);
+  assert.equal(result.retired, 1);
+  await assert.rejects(fs.access(path.join(plan[0].directory, 'design-intake')));
   assert.equal(await fs.readFile(path.join(result.backups[0], 'user-notes.txt'), 'utf8'), 'user data');
   assert.equal(await fs.readFile(path.join(plan[0].directory, 'unrelated', 'SKILL.md'), 'utf8'), 'keep me');
+}));
+
+test('upgrade retires all six legacy entries for every selected host and preserves each backup', async () => sandbox(async root => {
+  const plan = buildPlan(AGENTS.map(a => a.id), { root, explicitRoot: true });
+  for (const agent of plan) {
+    for (const name of [...SKILLS, ...LEGACY_SKILLS, 'unrelated']) {
+      await fs.mkdir(path.join(agent.directory, name), { recursive: true });
+      await fs.writeFile(path.join(agent.directory, name, 'notes.txt'), `${agent.id}/${name}`);
+    }
+  }
+  assert.equal((await findConflicts(plan)).length, 35);
+  await assert.rejects(install(source, plan), /confirmation/);
+  const result = await install(source, plan, { allowReplace: true });
+  assert.equal(result.installed, 5);
+  assert.equal(result.retired, 30);
+  assert.equal(result.backups.length, 35);
+  for (const agent of plan) {
+    assert.deepEqual((await fs.readdir(agent.directory)).sort(), ['design-to-handoff', 'unrelated']);
+    assert.equal(await fs.readFile(path.join(agent.directory, 'unrelated', 'notes.txt'), 'utf8'), `${agent.id}/unrelated`);
+  }
+  for (const backup of result.backups) {
+    const agent = path.basename(path.dirname(backup));
+    assert.equal(await fs.readFile(path.join(backup, 'notes.txt'), 'utf8'), `${agent}/${path.basename(backup)}`);
+  }
+}));
+
+test('failure during legacy retirement restores the complete previous skill set', async () => sandbox(async root => {
+  const plan = buildPlan(['codebuddy'], { root, explicitRoot: true });
+  for (const name of [...SKILLS, ...LEGACY_SKILLS]) {
+    await fs.mkdir(path.join(plan[0].directory, name), { recursive: true });
+    await fs.writeFile(path.join(plan[0].directory, name, 'original.txt'), name);
+  }
+  let writes = 0;
+  await assert.rejects(install(source, plan, { allowReplace: true, beforeMove() {
+    if (++writes === 4) throw new Error('retirement failed');
+  } }), /retirement failed/);
+  assert.deepEqual((await fs.readdir(plan[0].directory)).sort(), [...SKILLS, ...LEGACY_SKILLS].sort());
+  for (const name of [...SKILLS, ...LEGACY_SKILLS]) {
+    assert.equal(await fs.readFile(path.join(plan[0].directory, name, 'original.txt'), 'utf8'), name);
+  }
 }));
 
 test('partial write failure restores previous skills and removes incomplete new ones', async () => sandbox(async root => {
@@ -83,7 +142,7 @@ test('partial write failure restores previous skills and removes incomplete new 
   await fs.writeFile(path.join(old, 'user-file.txt'), 'original');
   let writes = 0;
   await assert.rejects(install(source, plan, { allowReplace: true, beforeMove() {
-    if (++writes === 9) throw new Error('simulated disk/permission failure');
+    if (++writes === 2) throw new Error('simulated disk/permission failure');
   } }), /simulated disk/);
   assert.equal(await fs.readFile(path.join(old, 'user-file.txt'), 'utf8'), 'original');
   assert.deepEqual(await fs.readdir(plan[0].directory), [SKILLS[0]]);
@@ -107,7 +166,7 @@ test('CLI installs selected agents in a sandbox with --yes and rejects invalid a
   const result = spawnSync(process.execPath, [cli, '--agents', '1,2,3', '--root', root, '--yes'], { encoding: 'utf8' });
   assert.equal(result.status, 0, result.stderr);
   assert.deepEqual((await fs.readdir(root)).sort(), ['.agents', '.claude', '.codebuddy']);
-  for (const agent of buildPlan(['codex', 'claude-code', 'codebuddy'], { root, explicitRoot: true })) assert.equal((await fs.readdir(agent.directory)).length, 7);
+  for (const agent of buildPlan(['codex', 'claude-code', 'codebuddy'], { root, explicitRoot: true })) assert.equal((await fs.readdir(agent.directory)).length, 1);
   const invalid = spawnSync(process.execPath, [cli, '--agents', 'not-an-agent', '--root', root, '--yes'], { encoding: 'utf8' });
   assert.equal(invalid.status, 1);
 }));
@@ -131,7 +190,7 @@ test('all five agents install the skill pack without optional OpenAI UI metadata
   for (const name of SKILLS) await fs.rm(path.join(portableSource, name, 'agents'), { recursive: true, force: true });
   const plan = buildPlan(AGENTS.map(a => a.id), { root: path.join(root, 'destination'), explicitRoot: true });
   const result = await install(portableSource, plan);
-  assert.equal(result.installed, 35);
+  assert.equal(result.installed, 5);
   for (const agent of plan) for (const name of SKILLS) {
     await fs.access(path.join(agent.directory, name, 'SKILL.md'));
     await assert.rejects(fs.access(path.join(agent.directory, name, 'agents', 'openai.yaml')));
@@ -183,7 +242,7 @@ test('arrow keys and Space select three agents; Enter proceeds and confirmation 
   prompt.child.stdin.write('y\r');
   const result = await prompt.finished;
   assert.equal(result.code, 0, result.output);
-  for (const agent of buildPlan(['codex', 'claude-code', 'codebuddy'], { root, explicitRoot: true })) assert.equal((await fs.readdir(agent.directory)).length, 7);
+  for (const agent of buildPlan(['codex', 'claude-code', 'codebuddy'], { root, explicitRoot: true })) assert.equal((await fs.readdir(agent.directory)).length, 1);
   await assert.rejects(fs.access(path.join(root, '.cursor')));
   await assert.rejects(fs.access(path.join(root, '.config', 'opencode')));
 }));
@@ -230,7 +289,7 @@ test('cancellation during writes rolls back the earlier agents and original skil
   let writes = 0;
   await assert.rejects(install(source, plan, {
     allowReplace: true, signal: controller.signal,
-    beforeMove() { if (++writes === 9) controller.abort(new Error('cancel requested')); },
+    beforeMove() { if (++writes === 2) controller.abort(new Error('cancel requested')); },
   }), /cancel requested/);
   assert.equal(await fs.readFile(path.join(original, 'original.txt'), 'utf8'), 'keep original');
   assert.deepEqual(await fs.readdir(plan[0].directory), [SKILLS[0]]);

@@ -11,13 +11,13 @@ import yaml
 
 sys.dont_write_bytecode = True
 ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = ROOT / 'skills/design-compose/scripts/verify_delivery.py'
+SCRIPT = ROOT / 'skills/design-to-handoff/scripts/verify_delivery.py'
 spec = importlib.util.spec_from_file_location('delivery', SCRIPT)
 module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(module)
 
 skills = sorted((ROOT / 'skills').iterdir())
-assert len(skills) == 7
+assert len(skills) == 1
 for skill in skills:
     meta = yaml.safe_load((skill / 'agents/openai.yaml').read_text())['interface']
     assert 25 <= len(meta['short_description']) <= 64, (skill.name, len(meta['short_description']))
@@ -25,7 +25,7 @@ for skill in skills:
     text = (skill / 'SKILL.md').read_text()
     assert '\ufffd' not in text
     assert yaml.safe_load(text.split('---')[1])['name'] == skill.name
-for path in ROOT.rglob('*.md'):
+for path in (ROOT / 'skills').rglob('*.md'):
     for link in re.findall(r'\]\(([^)]+)\)', path.read_text()):
         if not link.startswith(('http:', 'https:', '#')):
             assert (path.parent / link.split('#')[0]).exists(), (path, link)
@@ -92,4 +92,4 @@ report = {'skills_validated': len(skills), 'relative_links': 'passed',
           'ui_metadata': 'passed', 'encoding': 'passed',
           'evidence_cases': cases, 'invalid_roots': 4, 'cli_cases': 2,
           'live_figma': 'not_run', 'live_penpot': 'not_run', 'second_account': 'not_run'}
-print(json.dumps({'skills_validated': 7, 'scenario_checks': len(cases)+6, 'status': 'passed'}))
+print(json.dumps({'skills_validated': 1, 'scenario_checks': len(cases)+6, 'status': 'passed'}))

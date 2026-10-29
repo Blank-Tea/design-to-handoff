@@ -1,15 +1,12 @@
----
-name: design-compose
-description: 综合需求、规范与可选参考生成设计文档、可渲染界面和可交付属性，核对页面覆盖及真实图层。用于 Figma 或 Penpot 交付前的设计生成与验收。
----
-
 # 设计生成与验收
+
+这是 design-to-handoff 的内部阶段说明。需要用户输入时遵守[内置问答约定](../interactive-input.md)，沿用当前阶段、待答问题和已有答案。
 
 输入为已读需求、已回答或授权推荐的方向、可空参考、本地保存选择。重要输入缺失返回对应阶段。
 
 ## 生成
 
-1. 先形成正式设计文档，结构见[文档约定](../design-to-handoff/references/session-contract.md)。浓缩需求不是设计文档替代。
+1. 先形成正式设计文档，结构见[文档约定](../session-contract.md)。浓缩需求不是设计文档替代。
 2. 用 HTML/CSS 表达全部约定页面/状态。无需真实后端，不发送表单或生产交易。每个 viewId 保留可重现的视口和内容。
 3. 真实文字、flex/grid、明确 padding/gap、CSS token、语义容器。为页面和重要元素建立稳定 ID，维护 viewId→源页面→远端画板映射。为 Penpot 保留文字、边界、层级和样式，不能只留截图。
 4. 渲染，等待字体素材加载，逐页查截断、错字、重叠、滚动裁剪、密度和参考差异，检查约定终端及必要窄屏。修复后再上传。
@@ -25,9 +22,9 @@ description: 综合需求、规范与可选参考生成设计文档、可渲染�
 
 ## 验收与衔接
 
-先做本地需求覆盖及视觉检查。远端交付后检查远端结构、数值及查看者，见[验收格式](references/evidence.md)。可运行：
-使用[兼容说明](../design-to-handoff/references/runtime-compatibility.md)中探测到的 Python 3.9+：macOS 通常为 `python3`，Windows 通常为 `py -3` 或已确认为 Python 3 的 `python`。将本 skill 内 scripts/verify_delivery.py 的实际路径及证据 JSON 作为参数传入，不假设某个 shell 或 Unix 可执行位。
+先做本地需求覆盖及视觉检查。远端交付后检查远端结构、数值及查看者，见[验收格式](../evidence.md)。可运行：
+使用[兼容说明](../runtime-compatibility.md)中探测到的 Python 3.9+：macOS 通常为 `python3`，Windows 通常为 `py -3` 或已确认为 Python 3 的 `python`。将本技能根目录下的 [scripts/verify_delivery.py](../../scripts/verify_delivery.py) 的实际路径及证据 JSON 作为参数传入，不假设某个 shell 或 Unix 可执行位。
 
 脚本只检查证据记录完整性，不代替实际看图、读回和第二账号验证。本地样式不是远端已验证属性，缺证据标待验收。
 
-展示预览、设计说明，再交回主入口选平台。本地保存按用户选择，不擅自发布 HTML 网站替代设计平台。
+展示预览、设计说明，再进入平台选择。本地保存按用户选择，不擅自发布 HTML 网站替代设计平台。

@@ -1,4 +1,0 @@
-interface:
-  display_name: "Penpot 免费交付方案"
-  short_description: "通过 Penpot MCP 创建原生设计图层，验证在线查看和开发标注"
-  default_prompt: "请使用 $design-publish-penpot 完成本次设计工作，并说明仍需用户输入的内容。"
