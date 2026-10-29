@@ -6,12 +6,12 @@
 
 ## 一条命令，交互式多选安装
 
-先安装 **Node.js 22.20+（含 npm/npx）和 Git**，并确保可访问 GitHub。macOS Apple Silicon 安装 arm64 版 Node，Intel 安装 x64 版；Windows 使用与系统架构匹配的版本。
+先安装 **Node.js 22.20+（含 npm/npx）**，并确保可访问 GitHub。无需 Git 或 Python。macOS Apple Silicon 安装 arm64 版 Node，Intel 安装 x64 版；Windows 使用与系统架构匹配的版本。
 
 在自己的终端执行：
 
 ```text
-npx --yes github:Blank-Tea/design-to-handoff
+npx --yes https://codeload.github.com/Blank-Tea/design-to-handoff/tar.gz/refs/heads/master
 ```
 
 这会下载本仓库内的安装器，并显示多选菜单：
@@ -27,13 +27,7 @@ npx --yes github:Blank-Tea/design-to-handoff
 
 输入 `1,2,3`，核对目标目录并输入 `y`，就会为三个智能体分别安装完整的 7 个技能。没有选择的智能体不写入。命令开头的 `--yes` 只允许 npx 下载运行包，不会跳过安装器的智能体选择和安装确认。
 
-Windows 的 CMD 与 macOS 的 Terminal 可使用同一条命令。PowerShell 若提示 npx.ps1 被脚本策略禁止，改用 `npx.cmd --yes github:Blank-Tea/design-to-handoff`；不需要修改执行策略。
-
-没有 Git 时可从 GitHub HTTPS 源码包安装，仍只需一条命令：
-
-```text
-npx --yes --package=https://codeload.github.com/Blank-Tea/design-to-handoff/tar.gz/refs/heads/master design-to-handoff
-```
+Windows 的 CMD 与 macOS 的 Terminal 可使用同一条命令。PowerShell 若提示 npx.ps1 被脚本策略禁止，将开头的 npx 改为 npx.cmd，其余参数不变；不需要修改执行策略。此入口直接下载 GitHub HTTPS 源码包，不依赖 Git 的 SSH 或凭证配置。
 
 ### 安装位置
 
@@ -51,7 +45,7 @@ npx --yes --package=https://codeload.github.com/Blank-Tea/design-to-handoff/tar.
 安装到当前项目，用以下命令，菜单仍支持多选：
 
 ```text
-npx --yes github:Blank-Tea/design-to-handoff --scope project
+npx --yes https://codeload.github.com/Blank-Tea/design-to-handoff/tar.gz/refs/heads/master --scope project
 ```
 
 项目目录分别是 `.agents/skills/`、`.claude/skills/`、`.codebuddy/skills/`、`.cursor/skills/`。
@@ -59,7 +53,7 @@ npx --yes github:Blank-Tea/design-to-handoff --scope project
 如需不交互、明确指定三个智能体：
 
 ```text
-npx --yes github:Blank-Tea/design-to-handoff --agents codex,claude-code,codebuddy --yes
+npx --yes https://codeload.github.com/Blank-Tea/design-to-handoff/tar.gz/refs/heads/master --agents codex,claude-code,codebuddy --yes
 ```
 
 最后的 `--yes` 才是安装器确认选项。只看计划不写文件可使用 `--agents codex,claude-code,codebuddy --dry-run`。可用 `--root` 指定自定义用户/项目根目录；未指定时自动发现，不需要填写个人路径。
@@ -122,7 +116,7 @@ npx --yes skills@1.7.4 remove --skill design-to-handoff design-intake design-dir
 
 安装器是纯 JavaScript，只有 Node.js 标准库，无原生扩展、Bash/PowerShell 脚本、平台专用二进制和芯片相关依赖。技能正文使用通用 Agent Skills 格式；`agents/openai.yaml` 只是 Codex 可选界面元信息，其他宿主读取标准 SKILL.md。
 
-Windows、macOS Intel 和 macOS Apple Silicon 均为目标支持平台。各平台实测状态以[跨平台测试](https://github.com/Blank-Tea/design-to-handoff/actions/workflows/portability.yml)和[验证记录](验证记录.md)为准，不把路径模拟当成真实系统测试。
+Windows x64、macOS Intel x64、macOS Apple Silicon arm64 的独立真实系统测试均已通过，包含安装器、npm 打包和验收脚本。[本次三平台通过记录](https://github.com/Blank-Tea/design-to-handoff/actions/runs/40813988394)。该测试验证文件安装和脚本执行，不代表所有智能体的在线设计工具都已端到端测试。持续状态见[跨平台测试](https://github.com/Blank-Tea/design-to-handoff/actions/workflows/portability.yml)和[验证记录](验证记录.md)。
 
 安装本身不需要 Python。运行可选交付验收脚本才需 Python 3.9+：Windows 用 `py -3` 或确认指向 Python 3 的 `python`，macOS 用 `python3`。执行技能的 AI 应先探测环境、选择可用命令，详见[运行兼容说明](skills/design-to-handoff/references/runtime-compatibility.md)。
 
