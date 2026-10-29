@@ -23,7 +23,7 @@ function parseArgs(args) {
 async function main() {
   const options = parseArgs(process.argv.slice(2));
   if (options.help) {
-    console.log('Design to Handoff installer\n\nDefault: interactive multi-select, global installation.\n\n--agents codex,claude-code,codebuddy,cursor\n--scope global|project\n--root <absolute custom user/project root>\n--dry-run  Print plan without writing\n--yes      Confirm installation, backing up existing same-name skills\n\nNode.js >=22.20.0. No Python, native binaries, symlinks, or administrator rights required for installation.');
+    console.log('Design to Handoff installer\n\nDefault: interactive multi-select, global installation.\n\n--agents codex,claude-code,codebuddy,cursor,opencode\n--scope global|project\n--root <absolute custom user/project root>\n--dry-run  Print plan without writing\n--yes      Confirm installation, backing up existing same-name skills\n\nNode.js >=22.20.0. No Python, native binaries, symlinks, or administrator rights required for installation.');
     return;
   }
   if (!['global', 'project'].includes(options.scope)) throw new Error('scope must be global or project');

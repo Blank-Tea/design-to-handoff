@@ -20,7 +20,8 @@ test('numeric and named multi-selection, duplicates, all and cancellation', () =
   assert.deepEqual(parseSelection('1，1,4'), ['codex', 'cursor']);
   assert.deepEqual(parseSelection('a'), AGENTS.map(a => a.id));
   assert.deepEqual(parseSelection('q'), []);
-  for (const input of ['', '0', '5', 'unknown']) assert.throws(() => parseSelection(input));
+  assert.deepEqual(parseSelection('5'), ['opencode']);
+  for (const input of ['', '0', '6', 'unknown']) assert.throws(() => parseSelection(input));
 });
 
 test('Windows paths include spaces and Unicode without shell quoting', () => {
@@ -113,6 +114,26 @@ test('missing source blocks installation before any destination change', async (
   const plan = buildPlan(['codex'], { root, explicitRoot: true });
   await assert.rejects(install(path.join(root, 'missing'), plan));
   assert.deepEqual(await fs.readdir(root), []);
+}));
+
+test('OpenCode uses native global/project paths and respects XDG configuration', () => {
+  assert.equal(buildPlan(['opencode'], { root: '/profiles/test', env: {}, pathApi: path.posix })[0].directory, '/profiles/test/.config/opencode/skills');
+  assert.equal(buildPlan(['opencode'], { root: '/profiles/test', scope: 'project', env: {}, pathApi: path.posix })[0].directory, '/profiles/test/.opencode/skills');
+  assert.equal(buildPlan(['opencode'], { root: '/profiles/test', env: { XDG_CONFIG_HOME: '/custom/config' }, pathApi: path.posix })[0].directory, '/custom/config/opencode/skills');
+  assert.equal(buildPlan(['opencode'], { root: 'C:\\Profiles\\Test', env: {}, pathApi: path.win32 })[0].directory, 'C:\\Profiles\\Test\\.config\\opencode\\skills');
+});
+
+test('all five agents install the skill pack without optional OpenAI UI metadata', async () => sandbox(async root => {
+  const portableSource = path.join(root, 'source');
+  await fs.cp(source, portableSource, { recursive: true });
+  for (const name of SKILLS) await fs.rm(path.join(portableSource, name, 'agents'), { recursive: true, force: true });
+  const plan = buildPlan(AGENTS.map(a => a.id), { root: path.join(root, 'destination'), explicitRoot: true });
+  const result = await install(portableSource, plan);
+  assert.equal(result.installed, 35);
+  for (const agent of plan) for (const name of SKILLS) {
+    await fs.access(path.join(agent.directory, name, 'SKILL.md'));
+    await assert.rejects(fs.access(path.join(agent.directory, name, 'agents', 'openai.yaml')));
+  }
 }));
 
 console.log(`Installer tests running on ${process.platform}/${process.arch}`);

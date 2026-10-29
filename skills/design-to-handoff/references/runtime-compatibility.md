@@ -5,6 +5,7 @@
 - Codex：通常以 `$design-to-handoff` 调用。
 - Claude Code：通常以 `/design-to-handoff` 调用。
 - CodeBuddy：用 `/skills` 确认已加载，使用自然语言指定 skill；不要将 `/skills` 列表命令误写成某个技能的专用调用语法。
+- OpenCode：通过原生 skill 工具加载，或用自然语言指定 design-to-handoff；原生项目目录 .opencode/skills，全局目录 ~/.config/opencode/skills，尊重 XDG_CONFIG_HOME。
 - 其他兼容宿主：按其发现机制调用，阶段顺序和产物要求不变。
 
 agents/openai.yaml 只提供 Codex 界面元数据，不是运行的必需依赖。子 skill 通过实际相对路径读取，不依赖一个宿主才能理解的调用工具。相对路径始终以当前 SKILL.md 的目录解析，不能以终端当前目录猜测。

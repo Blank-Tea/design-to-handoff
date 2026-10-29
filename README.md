@@ -21,6 +21,7 @@ npx --yes https://codeload.github.com/Blank-Tea/design-to-handoff/tar.gz/refs/he
 2. Claude Code
 3. CodeBuddy
 4. Cursor
+5. OpenCode
 
 输入编号或名称，逗号/空格分隔，例如 1,2,3；a 全选；q 退出。
 ```
@@ -39,8 +40,9 @@ Windows 的 CMD 与 macOS 的 Terminal 可使用同一条命令。PowerShell 若
 | Claude Code | `~/.claude/skills/` | `%USERPROFILE%\.claude\skills\` |
 | CodeBuddy | `~/.codebuddy/skills/` | `%USERPROFILE%\.codebuddy\skills\` |
 | Cursor | `~/.cursor/skills/` | `%USERPROFILE%\.cursor\skills\` |
+| OpenCode | `~/.config/opencode/skills/` | `%USERPROFILE%\.config\opencode\skills\` |
 
-显式配置了 `CODEX_HOME` 或 `CLAUDE_CONFIG_DIR` 时，分别使用其 `skills` 子目录。安装器使用文件复制，不创建符号链接，不需要管理员权限。只有用户目录被系统限制时才需要另选可写位置。
+显式配置了 `CODEX_HOME` 或 `CLAUDE_CONFIG_DIR` 时，分别使用其 `skills` 子目录；OpenCode 尊重 `XDG_CONFIG_HOME`，使用其中 opencode/skills。安装器使用文件复制，不创建符号链接，不需要管理员权限。只有用户目录被系统限制时才需要另选可写位置。
 
 安装到当前项目，用以下命令，菜单仍支持多选：
 
@@ -48,7 +50,7 @@ Windows 的 CMD 与 macOS 的 Terminal 可使用同一条命令。PowerShell 若
 npx --yes https://codeload.github.com/Blank-Tea/design-to-handoff/tar.gz/refs/heads/master --scope project
 ```
 
-项目目录分别是 `.agents/skills/`、`.claude/skills/`、`.codebuddy/skills/`、`.cursor/skills/`。
+项目目录分别是 `.agents/skills/`、`.claude/skills/`、`.codebuddy/skills/`、`.cursor/skills/`、`.opencode/skills/`。
 
 如需不交互、明确指定三个智能体：
 
@@ -67,9 +69,16 @@ npx --yes https://codeload.github.com/Blank-Tea/design-to-handoff/tar.gz/refs/he
 - Codex：`$design-to-handoff`。
 - Claude Code：`/design-to-handoff`。
 - CodeBuddy：用 `/skills` 查看已加载技能，然后说“请使用 design-to-handoff 按步骤完成设计交付”。
+- OpenCode：通过其原生 skill 加载机制，或直接说“请加载 design-to-handoff”；无须读取 openai.yaml。
 - Cursor 或其他兼容宿主：按其技能界面选择，或用自然语言指定技能名称。
 
 安装只放置技能说明和验收脚本，不替你安装/授权 Figma 或 Penpot MCP，不含任何作者账号或密钥。每位使用者使用自己的账号，在平台选择阶段连接。无需作者电脑上的路径、配置或文件。
+
+## 为什么存在 agents/openai.yaml
+
+这是 Codex 的可选界面扩展，只有显示名称、简介和默认提示词，不是 OpenAI SDK、模型配置或运行依赖。通用入口是 SKILL.md；references/ 是按需阅读的补充文档，scripts/ 是按需执行的本地工具。此处 agents/ 不是多智能体安装目录，也不表示会启动额外 AI。
+
+其他宿主按其标准技能机制读取 SKILL.md。本包有自动化测试：从全部技能中移除 agents/ 后，仍能为五种目标安装 35 个完整技能目录。因此无须编造各宿主不识别的 claude.yaml、cursor.yaml 等文件。独立宿主能否完成实际设计上传，仍取决于其可用工具与授权，不能用安装通过代替端到端验证。
 
 ## 工作流程
 
@@ -111,6 +120,8 @@ npx --yes skills@1.7.4 remove --skill design-to-handoff design-intake design-dir
 ```
 
 将 `--agent` 后面的名字改为实际需卸载的智能体；项目安装不带 `--global`。卸载不删除安装器保存的备份。
+
+OpenCode 的原生项目安装目录为 `.opencode/skills/`，与部分通用安装器采用的 `.agents/skills/` 不同。项目级卸载请在 OpenCode 的技能管理中处理，或只移除 `.opencode/skills/` 下本包列出的 7 个目录；不要假设上述通用卸载命令会找到原生项目目录。自定义根目录也应按实际安装计划处理。
 
 ## 系统兼容性
 
