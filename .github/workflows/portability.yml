@@ -29,6 +29,7 @@ jobs:
           node-version: '22'
       - name: Verify actual platform and architecture
         run: node -e "if(process.platform!=='${{ matrix.platform }}'||process.arch!=='${{ matrix.arch }}') process.exit(1); console.log(process.platform, process.arch)"
+      - run: npm ci --ignore-scripts
       - run: npm test
       - name: Check npm distribution contents
         run: npm pack --dry-run

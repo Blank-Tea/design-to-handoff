@@ -4,11 +4,13 @@ import * as fs from 'node:fs/promises';
 import path from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
+import { stripVTControlCharacters } from 'node:util';
 import { AGENTS, SKILLS, buildPlan, findConflicts, install, parseSelection } from '../lib/installer.mjs';
 
 const source = fileURLToPath(new URL('../skills/', import.meta.url));
 const cli = fileURLToPath(new URL('../bin/install.mjs', import.meta.url));
+const terminalFixture = fileURLToPath(new URL('./fixtures/terminal-input.mjs', import.meta.url));
 async function sandbox(fn) {
   const root = await fs.mkdtemp(path.join(tmpdir(), 'design-handoff-test-'));
   try { await fn(root); } finally { await fs.rm(root, { recursive: true, force: true }); }
@@ -134,6 +136,103 @@ test('all five agents install the skill pack without optional OpenAI UI metadata
     await fs.access(path.join(agent.directory, name, 'SKILL.md'));
     await assert.rejects(fs.access(path.join(agent.directory, name, 'agents', 'openai.yaml')));
   }
+}));
+
+function interactive(t, root) {
+  const child = spawn(process.execPath, ['--import', terminalFixture, cli, '--root', root], { stdio: ['pipe', 'pipe', 'pipe'] });
+  let output = '';
+  const collect = chunk => {
+    output += chunk.toString('utf8');
+    if (output.length > 100_000) child.kill('SIGKILL');
+  };
+  child.stdout.on('data', collect);
+  child.stderr.on('data', collect);
+  t.after(() => { if (child.exitCode === null) child.kill('SIGKILL'); });
+  const finished = new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      child.kill('SIGKILL');
+      reject(new Error('Interactive installer did not exit promptly: ' + stripVTControlCharacters(output).slice(-2000)));
+    }, 8000);
+    child.once('error', error => { clearTimeout(timeout); reject(error); });
+    child.once('close', (code, signal) => {
+      clearTimeout(timeout);
+      resolve({ code, signal, output: stripVTControlCharacters(output) });
+    });
+  });
+  // Attach early so failures while waiting for a prompt are not unhandled.
+  finished.catch(() => {});
+  return {
+    child, finished,
+    async waitFor(text) {
+      const deadline = Date.now() + 5000;
+      while (!stripVTControlCharacters(output).includes(text)) {
+        if (Date.now() >= deadline || child.exitCode !== null) throw new Error(`Prompt not shown: ${text}\n${stripVTControlCharacters(output)}`);
+        await new Promise(resolve => setTimeout(resolve, 10));
+      }
+    },
+  };
+}
+
+test('arrow keys and Space select three agents; Enter proceeds and confirmation installs only them', async t => sandbox(async root => {
+  const prompt = interactive(t, root);
+  await prompt.waitFor('选择安装到哪些智能体');
+  prompt.child.stdin.write(' \x1b[B \x1b[B \r');
+  await prompt.waitFor('开始安装？');
+  prompt.child.stdin.write('y\r');
+  const result = await prompt.finished;
+  assert.equal(result.code, 0, result.output);
+  for (const agent of buildPlan(['codex', 'claude-code', 'codebuddy'], { root, explicitRoot: true })) assert.equal((await fs.readdir(agent.directory)).length, 7);
+  await assert.rejects(fs.access(path.join(root, '.cursor')));
+  await assert.rejects(fs.access(path.join(root, '.config', 'opencode')));
+}));
+
+test('one Ctrl+C in the selection menu exits once with no readline errors or writes', async t => sandbox(async root => {
+  const prompt = interactive(t, root);
+  await prompt.waitFor('选择安装到哪些智能体');
+  prompt.child.stdin.write('\x03');
+  const result = await prompt.finished;
+  assert.equal(result.code, 130, result.output);
+  assert.doesNotMatch(result.output, /readline was closed|ERR_USE_AFTER_CLOSE|Installation failed/);
+  assert.equal((result.output.match(/已取消安装/g) || []).length, 1);
+  assert.deepEqual(await fs.readdir(root), []);
+}));
+
+test('one Ctrl+C at installation confirmation exits without writes', async t => sandbox(async root => {
+  const prompt = interactive(t, root);
+  await prompt.waitFor('选择安装到哪些智能体');
+  prompt.child.stdin.write(' \r');
+  await prompt.waitFor('开始安装？');
+  prompt.child.stdin.write('\x03');
+  const result = await prompt.finished;
+  assert.equal(result.code, 130, result.output);
+  assert.doesNotMatch(result.output, /readline was closed|ERR_USE_AFTER_CLOSE|Installation failed/);
+  assert.deepEqual(await fs.readdir(root), []);
+}));
+
+test('closed input while selecting cancels rather than retrying a closed readline', async t => sandbox(async root => {
+  const prompt = interactive(t, root);
+  await prompt.waitFor('选择安装到哪些智能体');
+  prompt.child.stdin.end();
+  const result = await prompt.finished;
+  assert.equal(result.code, 130, result.output);
+  assert.doesNotMatch(result.output, /readline was closed|ERR_USE_AFTER_CLOSE/);
+  assert.deepEqual(await fs.readdir(root), []);
+}));
+
+test('cancellation during writes rolls back the earlier agents and original skills', async () => sandbox(async root => {
+  const plan = buildPlan(['claude-code', 'codebuddy'], { root, explicitRoot: true });
+  const original = path.join(plan[0].directory, SKILLS[0]);
+  await fs.mkdir(original, { recursive: true });
+  await fs.writeFile(path.join(original, 'original.txt'), 'keep original');
+  const controller = new AbortController();
+  let writes = 0;
+  await assert.rejects(install(source, plan, {
+    allowReplace: true, signal: controller.signal,
+    beforeMove() { if (++writes === 9) controller.abort(new Error('cancel requested')); },
+  }), /cancel requested/);
+  assert.equal(await fs.readFile(path.join(original, 'original.txt'), 'utf8'), 'keep original');
+  assert.deepEqual(await fs.readdir(plan[0].directory), [SKILLS[0]]);
+  assert.deepEqual(await fs.readdir(plan[1].directory), []);
 }));
 
 console.log(`Installer tests running on ${process.platform}/${process.arch}`);

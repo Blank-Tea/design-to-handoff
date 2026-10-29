@@ -17,16 +17,24 @@ npx --yes https://codeload.github.com/Blank-Tea/design-to-handoff/tar.gz/refs/he
 这会下载本仓库内的安装器，并显示多选菜单：
 
 ```text
-1. Codex
-2. Claude Code
-3. CodeBuddy
-4. Cursor
-5. OpenCode
+◻ Codex
+◻ Claude Code
+◻ CodeBuddy
+◻ Cursor
+◻ OpenCode
 
-输入编号或名称，逗号/空格分隔，例如 1,2,3；a 全选；q 退出。
+↑/↓ 移动 · 空格勾选/取消勾选 · 回车确认 · Ctrl+C 取消
 ```
 
-输入 `1,2,3`，核对目标目录并输入 `y`，就会为三个智能体分别安装完整的 7 个技能。没有选择的智能体不写入。命令开头的 `--yes` 只允许 npx 下载运行包，不会跳过安装器的智能体选择和安装确认。
+使用方向键移动，按空格勾选一个或多个目标，回车后核对目录，再选择“安装”。没有选择的智能体不写入。命令开头的 `--yes` 只允许 npx 下载运行包，不会跳过安装器的智能体选择和安装确认。
+
+选择页、确认页按一次 Ctrl+C 即取消，退出码为 130，不再反复向已关闭的 readline 提问。输入流关闭同样会取消；写入期间收到中断则先回滚，不保留半套技能。
+
+如果本机 npm 缓存仍运行旧的编号菜单，可使用固定修复版本入口：
+
+```text
+npx --yes https://codeload.github.com/Blank-Tea/design-to-handoff/tar.gz/refs/tags/v0.3.0
+```
 
 Windows 的 CMD 与 macOS 的 Terminal 可使用同一条命令。PowerShell 若提示 npx.ps1 被脚本策略禁止，将开头的 npx 改为 npx.cmd，其余参数不变；不需要修改执行策略。此入口直接下载 GitHub HTTPS 源码包，不依赖 Git 的 SSH 或凭证配置。
 
@@ -125,7 +133,7 @@ OpenCode 的原生项目安装目录为 `.opencode/skills/`，与部分通用安
 
 ## 系统兼容性
 
-安装器是纯 JavaScript，只有 Node.js 标准库，无原生扩展、Bash/PowerShell 脚本、平台专用二进制和芯片相关依赖。技能正文使用通用 Agent Skills 格式；`agents/openai.yaml` 只是 Codex 可选界面元信息，其他宿主读取标准 SKILL.md。
+安装器是纯 JavaScript：文件处理使用 Node.js 标准库，终端多选使用固定版本的 @clack/prompts，依赖随 npm 自动下载。无原生扩展、Bash/PowerShell 脚本、平台专用二进制和芯片相关依赖。技能正文使用通用 Agent Skills 格式；`agents/openai.yaml` 只是 Codex 可选界面元信息，其他宿主读取标准 SKILL.md。
 
 Windows x64、macOS Intel x64、macOS Apple Silicon arm64 的独立真实系统测试均已通过，包含安装器、npm 打包和验收脚本。[本次三平台通过记录](https://github.com/Blank-Tea/design-to-handoff/actions/runs/40813988394)。该测试验证文件安装和脚本执行，不代表所有智能体的在线设计工具都已端到端测试。持续状态见[跨平台测试](https://github.com/Blank-Tea/design-to-handoff/actions/workflows/portability.yml)和[验证记录](验证记录.md)。
 
@@ -136,6 +144,7 @@ Windows x64、macOS Intel x64、macOS Apple Silicon arm64 的独立真实系统�
 ## 维护者校验
 
 ```sh
+npm ci --ignore-scripts
 npm test
 python3 -m pip install -r requirements-dev.txt
 python3 scripts/verify_bundle.py
