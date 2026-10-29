@@ -1,0 +1,4 @@
+interface:
+  display_name: "Figma 免费交付方案"
+  short_description: "将页面转换为 Figma 可编辑图层，验证多人查看及基础代码标注"
+  default_prompt: "请使用 $design-publish-figma 完成本次设计工作，并说明仍需用户输入的内容。"

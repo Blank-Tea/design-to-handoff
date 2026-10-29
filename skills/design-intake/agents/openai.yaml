@@ -1,0 +1,4 @@
+interface:
+  display_name: "需求文档提炼"
+  short_description: "读取需求与补充文档，整理页面流程、业务规则及可追溯的需求摘要"
+  default_prompt: "请使用 $design-intake 完成本次设计工作，并说明仍需用户输入的内容。"

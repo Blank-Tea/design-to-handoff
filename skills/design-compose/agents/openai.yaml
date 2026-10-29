@@ -1,0 +1,4 @@
+interface:
+  display_name: "分层设计生成与验收"
+  short_description: "根据需求规范生成设计文档和页面，检查真实图层及开发交付属性"
+  default_prompt: "请使用 $design-compose 完成本次设计工作，并说明仍需用户输入的内容。"

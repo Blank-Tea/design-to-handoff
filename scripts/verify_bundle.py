@@ -1,0 +1,42 @@
+#!/usr/bin/env python3
+"""Validate the portable skill pack without knowing its checkout directory."""
+import re
+from pathlib import Path
+import yaml
+
+ROOT = Path(__file__).resolve().parents[1]
+NAMES = {
+    'design-to-handoff', 'design-intake', 'design-direction',
+    'design-reference-analysis', 'design-compose',
+    'design-publish-figma', 'design-publish-penpot'
+}
+
+
+def main():
+    skill_root = ROOT / 'skills'
+    assert {p.name for p in skill_root.iterdir() if p.is_dir()} == NAMES
+    for name in sorted(NAMES):
+        path = skill_root / name
+        text = (path / 'SKILL.md').read_text(encoding='utf-8')
+        match = re.match(r'^---\n(.*?)\n---', text, re.S)
+        assert match, name
+        data = yaml.safe_load(match.group(1))
+        assert data['name'] == name and isinstance(data['description'], str) and data['description'].strip(), name
+        assert len(data['description']) <= 1024, name
+        assert '[TODO:' not in text and '\ufffd' not in text, name
+        interface = yaml.safe_load((path / 'agents/openai.yaml').read_text(encoding='utf-8'))['interface']
+        assert 25 <= len(interface['short_description']) <= 64, name
+        assert '$' + name in interface['default_prompt'], name
+    for path in ROOT.rglob('*.md'):
+        if '.git' in path.parts:
+            continue
+        text = path.read_text(encoding='utf-8')
+        assert not re.search(r'/Users/[^/]+|[A-Z]:\\Users\\', text), path
+        for target in re.findall(r'\]\(([^)]+)\)', text):
+            if not target.startswith(('http:', 'https:', '#')):
+                assert (path.parent / target.split('#')[0]).exists(), (path, target)
+    print('Validated 7 skills, metadata, portable paths and Markdown links.')
+
+
+if __name__ == '__main__':
+    main()
