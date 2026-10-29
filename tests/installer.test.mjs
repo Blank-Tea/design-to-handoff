@@ -1,0 +1,118 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import * as fs from 'node:fs/promises';
+import path from 'node:path';
+import { tmpdir } from 'node:os';
+import { fileURLToPath } from 'node:url';
+import { spawnSync } from 'node:child_process';
+import { AGENTS, SKILLS, buildPlan, findConflicts, install, parseSelection } from '../lib/installer.mjs';
+
+const source = fileURLToPath(new URL('../skills/', import.meta.url));
+const cli = fileURLToPath(new URL('../bin/install.mjs', import.meta.url));
+async function sandbox(fn) {
+  const root = await fs.mkdtemp(path.join(tmpdir(), 'design-handoff-test-'));
+  try { await fn(root); } finally { await fs.rm(root, { recursive: true, force: true }); }
+}
+
+test('numeric and named multi-selection, duplicates, all and cancellation', () => {
+  assert.deepEqual(parseSelection('1,2 3'), ['codex', 'claude-code', 'codebuddy']);
+  assert.deepEqual(parseSelection('codex,claude-code,codebuddy'), ['codex', 'claude-code', 'codebuddy']);
+  assert.deepEqual(parseSelection('1，1,4'), ['codex', 'cursor']);
+  assert.deepEqual(parseSelection('a'), AGENTS.map(a => a.id));
+  assert.deepEqual(parseSelection('q'), []);
+  for (const input of ['', '0', '5', 'unknown']) assert.throws(() => parseSelection(input));
+});
+
+test('Windows paths include spaces and Unicode without shell quoting', () => {
+  const root = 'C:\\Users\\Design User ' + String.fromCodePoint(0x8bbe, 0x8ba1);
+  const plan = buildPlan(['codex', 'claude-code', 'codebuddy'], { root, env: {}, pathApi: path.win32 });
+  assert.deepEqual(plan.map(a => a.directory), ['.agents', '.claude', '.codebuddy'].map(p => path.win32.join(root, p, 'skills')));
+  assert.equal(buildPlan(['codex'], { root, env: { CODEX_HOME: 'D:\\Custom Codex' }, pathApi: path.win32 })[0].directory, 'D:\\Custom Codex\\skills');
+});
+
+test('macOS paths and explicit root, with environment overrides', () => {
+  const root = '/profiles/design user';
+  assert.equal(buildPlan(['codex'], { root, env: {}, pathApi: path.posix })[0].directory, '/profiles/design user/.agents/skills');
+  assert.equal(buildPlan(['claude-code'], { root, env: { CLAUDE_CONFIG_DIR: '/custom/claude' }, pathApi: path.posix })[0].directory, '/custom/claude/skills');
+  assert.equal(buildPlan(['codex'], { root, explicitRoot: true, env: { CODEX_HOME: '/unrelated' }, pathApi: path.posix })[0].directory, '/profiles/design user/.agents/skills');
+  assert.equal(buildPlan(['codebuddy'], { root, scope: 'project', env: {}, pathApi: path.posix })[0].directory, '/profiles/design user/.codebuddy/skills');
+});
+
+test('three selected agents receive all seven skills with working sibling links; unselected remains absent', async () => sandbox(async parent => {
+  const root = path.join(parent, 'design user \u8bbe\u8ba1');
+  const plan = buildPlan(['codex', 'claude-code', 'codebuddy'], { root, explicitRoot: true });
+  const result = await install(source, plan);
+  assert.equal(result.installed, 21);
+  for (const agent of plan) {
+    for (const name of SKILLS) {
+      const actual = path.join(agent.directory, name, 'SKILL.md');
+      assert.equal(await fs.readFile(actual, 'utf8'), await fs.readFile(path.join(source, name, 'SKILL.md'), 'utf8'));
+    }
+    for (const skill of SKILLS) {
+      const file = path.join(agent.directory, skill, 'SKILL.md');
+      for (const [, target] of (await fs.readFile(file, 'utf8')).matchAll(/\]\(([^)]+)\)/g)) {
+        if (!/^(https?:|#)/.test(target)) await fs.access(path.resolve(path.dirname(file), target));
+      }
+    }
+    assert.equal((await fs.lstat(path.join(agent.directory, SKILLS[0]))).isSymbolicLink(), false);
+  }
+  await assert.rejects(fs.access(path.join(root, '.cursor')));
+}));
+
+test('existing same-name skills need consent, are backed up, and unrelated skills survive', async () => sandbox(async root => {
+  const plan = buildPlan(['codebuddy'], { root, explicitRoot: true });
+  await fs.mkdir(path.join(plan[0].directory, 'design-intake'), { recursive: true });
+  await fs.writeFile(path.join(plan[0].directory, 'design-intake', 'user-notes.txt'), 'user data');
+  await fs.mkdir(path.join(plan[0].directory, 'unrelated'), { recursive: true });
+  await fs.writeFile(path.join(plan[0].directory, 'unrelated', 'SKILL.md'), 'keep me');
+  assert.equal((await findConflicts(plan)).length, 1);
+  await assert.rejects(install(source, plan), /confirmation/);
+  const result = await install(source, plan, { allowReplace: true });
+  assert.equal(result.backups.length, 1);
+  assert.equal(await fs.readFile(path.join(result.backups[0], 'user-notes.txt'), 'utf8'), 'user data');
+  assert.equal(await fs.readFile(path.join(plan[0].directory, 'unrelated', 'SKILL.md'), 'utf8'), 'keep me');
+}));
+
+test('partial write failure restores previous skills and removes incomplete new ones', async () => sandbox(async root => {
+  const plan = buildPlan(['claude-code', 'codebuddy'], { root, explicitRoot: true });
+  const old = path.join(plan[0].directory, SKILLS[0]);
+  await fs.mkdir(old, { recursive: true });
+  await fs.writeFile(path.join(old, 'user-file.txt'), 'original');
+  let writes = 0;
+  await assert.rejects(install(source, plan, { allowReplace: true, beforeMove() {
+    if (++writes === 9) throw new Error('simulated disk/permission failure');
+  } }), /simulated disk/);
+  assert.equal(await fs.readFile(path.join(old, 'user-file.txt'), 'utf8'), 'original');
+  assert.deepEqual(await fs.readdir(plan[0].directory), [SKILLS[0]]);
+  assert.deepEqual(await fs.readdir(plan[1].directory), []);
+}));
+
+test('CLI dry run and noninteractive no-selection do not write any agent directory', async () => sandbox(async root => {
+  const dry = spawnSync(process.execPath, [cli, '--agents', 'codex,claude-code,codebuddy', '--root', root, '--dry-run'], { encoding: 'utf8' });
+  assert.equal(dry.status, 0, dry.stderr);
+  assert.match(dry.stdout, /Dry run/);
+  assert.deepEqual(await fs.readdir(root), []);
+  const noSelection = spawnSync(process.execPath, [cli, '--root', root], { encoding: 'utf8' });
+  assert.equal(noSelection.status, 1);
+  assert.match(noSelection.stderr, /interactive terminal/);
+  const noConsent = spawnSync(process.execPath, [cli, '--root', root, '--agents', 'codex'], { encoding: 'utf8' });
+  assert.equal(noConsent.status, 1);
+  assert.deepEqual(await fs.readdir(root), []);
+}));
+
+test('CLI installs selected agents in a sandbox with --yes and rejects invalid agents', async () => sandbox(async root => {
+  const result = spawnSync(process.execPath, [cli, '--agents', '1,2,3', '--root', root, '--yes'], { encoding: 'utf8' });
+  assert.equal(result.status, 0, result.stderr);
+  assert.deepEqual((await fs.readdir(root)).sort(), ['.agents', '.claude', '.codebuddy']);
+  for (const agent of buildPlan(['codex', 'claude-code', 'codebuddy'], { root, explicitRoot: true })) assert.equal((await fs.readdir(agent.directory)).length, 7);
+  const invalid = spawnSync(process.execPath, [cli, '--agents', 'not-an-agent', '--root', root, '--yes'], { encoding: 'utf8' });
+  assert.equal(invalid.status, 1);
+}));
+
+test('missing source blocks installation before any destination change', async () => sandbox(async root => {
+  const plan = buildPlan(['codex'], { root, explicitRoot: true });
+  await assert.rejects(install(path.join(root, 'missing'), plan));
+  assert.deepEqual(await fs.readdir(root), []);
+}));
+
+console.log(`Installer tests running on ${process.platform}/${process.arch}`);

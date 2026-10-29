@@ -26,7 +26,7 @@ description: 综合需求、规范与可选参考生成设计文档、可渲染�
 ## 验收与衔接
 
 先做本地需求覆盖及视觉检查。远端交付后检查远端结构、数值及查看者，见[验收格式](references/evidence.md)。可运行：
-`python3 <本skill目录>/scripts/verify_delivery.py <证据.json>`
+使用[兼容说明](../design-to-handoff/references/runtime-compatibility.md)中探测到的 Python 3.9+：macOS 通常为 `python3`，Windows 通常为 `py -3` 或已确认为 Python 3 的 `python`。将本 skill 内 scripts/verify_delivery.py 的实际路径及证据 JSON 作为参数传入，不假设某个 shell 或 Unix 可执行位。
 
 脚本只检查证据记录完整性，不代替实际看图、读回和第二账号验证。本地样式不是远端已验证属性，缺证据标待验收。
 

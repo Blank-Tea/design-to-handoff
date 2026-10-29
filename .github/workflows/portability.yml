@@ -1,0 +1,42 @@
+name: Cross-platform installer
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  test:
+    name: ${{ matrix.label }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: windows-latest
+            label: Windows x64
+            platform: win32
+            arch: x64
+          - runner: macos-15-intel
+            label: macOS Intel
+            platform: darwin
+            arch: x64
+          - runner: macos-14
+            label: macOS Apple Silicon
+            platform: darwin
+            arch: arm64
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify actual platform and architecture
+        run: node -e "if(process.platform!=='${{ matrix.platform }}'||process.arch!=='${{ matrix.arch }}') process.exit(1); console.log(process.platform, process.arch)"
+      - run: npm test
+      - name: Check npm distribution contents
+        run: npm pack --dry-run
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r requirements-dev.txt
+      - run: python scripts/verify_bundle.py
+      - run: python tests/test_delivery.py
+        env:
+          PYTHONUTF8: '1'

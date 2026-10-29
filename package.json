@@ -1,0 +1,12 @@
+{
+  "name": "design-to-handoff",
+  "version": "0.2.0",
+  "private": true,
+  "description": "Interactive multi-agent installer for the Design to Handoff skill pack",
+  "type": "module",
+  "bin": {"design-to-handoff": "bin/install.mjs"},
+  "files": ["bin", "lib", "skills", "README.md", "使用说明.md"],
+  "engines": {"node": ">=22.20.0"},
+  "scripts": {"test": "node --test tests/installer.test.mjs"},
+  "repository": {"type": "git", "url": "https://github.com/Blank-Tea/design-to-handoff.git"}
+}

@@ -20,6 +20,10 @@ description: 分步收集需求文档、补充说明、设计方向与可选参�
 
 不将技能创建者在其他聊天中的业务、语言和设计偏好视为本次需求。
 
+## 宿主与操作系统
+
+本技能应在 Codex、Claude Code、CodeBuddy 等支持 Agent Skills 的宿主中使用，不依赖作者本机。第一次运行按[运行兼容说明](references/runtime-compatibility.md)识别宿主、操作系统与工具。使用宿主自身的提问、读文件、浏览器和 MCP 能力，不假设存在某个 Codex 专用工具名。Windows、macOS Intel 和 Apple Silicon 共用同一份正文；不强制使用 Bash、macOS 桌面自动化或某个芯片专用程序。
+
 ## 按顺序执行
 
 | 阶段 | 读取并执行 | 完成条件 |
