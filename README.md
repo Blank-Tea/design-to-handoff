@@ -33,7 +33,7 @@ npx --yes https://codeload.github.com/Blank-Tea/design-to-handoff/tar.gz/refs/he
 如果本机 npm 缓存仍运行旧的编号菜单，可使用固定修复版本入口：
 
 ```text
-npx --yes https://codeload.github.com/Blank-Tea/design-to-handoff/tar.gz/refs/tags/v0.3.0
+npx --yes https://codeload.github.com/Blank-Tea/design-to-handoff/tar.gz/refs/tags/v0.3.1
 ```
 
 Windows 的 CMD 与 macOS 的 Terminal 可使用同一条命令。PowerShell 若提示 npx.ps1 被脚本策略禁止，将开头的 npx 改为 npx.cmd，其余参数不变；不需要修改执行策略。此入口直接下载 GitHub HTTPS 源码包，不依赖 Git 的 SSH 或凭证配置。

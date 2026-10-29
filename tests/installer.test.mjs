@@ -10,7 +10,7 @@ import { AGENTS, SKILLS, buildPlan, findConflicts, install, parseSelection } fro
 
 const source = fileURLToPath(new URL('../skills/', import.meta.url));
 const cli = fileURLToPath(new URL('../bin/install.mjs', import.meta.url));
-const terminalFixture = fileURLToPath(new URL('./fixtures/terminal-input.mjs', import.meta.url));
+const terminalFixture = new URL('./fixtures/terminal-input.mjs', import.meta.url).href;
 async function sandbox(fn) {
   const root = await fs.mkdtemp(path.join(tmpdir(), 'design-handoff-test-'));
   try { await fn(root); } finally { await fs.rm(root, { recursive: true, force: true }); }
@@ -140,6 +140,8 @@ test('all five agents install the skill pack without optional OpenAI UI metadata
 
 function interactive(t, root) {
   const child = spawn(process.execPath, ['--import', terminalFixture, cli, '--root', root], { stdio: ['pipe', 'pipe', 'pipe'] });
+  child.stdout.setEncoding('utf8');
+  child.stderr.setEncoding('utf8');
   let output = '';
   const collect = chunk => {
     output += chunk.toString('utf8');
