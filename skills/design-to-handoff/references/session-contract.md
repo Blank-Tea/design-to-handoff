@@ -7,7 +7,8 @@
 - requirements：稳定 REQ-001 等 ID、描述、来源定位、明确或假设。
 - views：稳定 viewId（页面+状态+终端）、关联需求、内容和必要交互。
 - conflicts / assumptions：冲突及影响、已说明的假设。
-- direction：每项具体数值及 user / recommendation / reference 来源。
+- designContext：designMode、target 与 styleReference 的独立身份、context_ready/not_applicable/draft_only、相关 revision/摘要及读取时间、生成前的冲突取舍。
+- direction：每项具体数值及 user / existing_design / recommendation / reference 来源。
 - references：结论、证据、实测/估计、是否采纳。
 - localSave：是否保留、用户目录。
 - platforms / deliveries：平台选择；deliveryMode（new/append/update）；目标类型、账号/团队、projectId/fileId/pageId/nodeId 与真实链接。
