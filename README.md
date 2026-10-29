@@ -6,39 +6,41 @@
 
 **所有智能体采用同一交互规则**：优先调用宿主原生问答，选择题支持选项和自定义输入；先单独询问【需求文档｜必填】，再单独询问【补充文档｜可选、可跳过】。回答后自动继续，不要求再发送“继续”。Codex、Claude Code、CodeBuddy、Cursor、OpenCode 的差异仅是工具协议。当前模式确实没有原生问答时，须先说明能力限制，不能用文字菜单冒充控件。
 
-## 一条命令，交互式多选安装
+## 安装一次，之后直接更新
 
-先安装 **Node.js 22.20+（含 npm/npx）**，并确保可访问 GitHub。无需 Git 或 Python。macOS Apple Silicon 安装 arm64 版 Node，Intel 安装 x64 版；Windows 使用与系统架构匹配的版本。
+先安装 **Node.js 22.20+（含 npm）**，并确保可访问 GitHub。无需 Git 或 Python。macOS Apple Silicon 安装 arm64 版 Node，Intel 安装 x64 版；Windows 使用与系统架构匹配的版本。
 
-在自己的终端执行：
+首次把命令行工具安装到 npm 的全局目录：
 
-```text
-npx --yes https://codeload.github.com/Blank-Tea/design-to-handoff/tar.gz/refs/heads/master
+```sh
+npm install --global https://codeload.github.com/Blank-Tea/design-to-handoff/tar.gz/refs/tags/v0.5.0
 ```
 
-这会下载本仓库内的安装器，并显示多选菜单：
+再选择要安装技能的智能体：
 
-```text
-◻ Codex
-◻ Claude Code
-◻ CodeBuddy
-◻ Cursor
-◻ OpenCode
-
-↑/↓ 移动 · 空格勾选/取消勾选 · 回车确认 · Ctrl+C 取消
+```sh
+design-to-handoff
 ```
 
-使用方向键移动，按空格勾选一个或多个目标，回车后核对目录，再选择“安装”。没有选择的智能体不写入。命令开头的 `--yes` 只允许 npx 下载运行包，不会跳过安装器的智能体选择和安装确认。
+菜单支持 ↑/↓ 移动、空格勾选多个智能体、回车确认，核对目录后安装。选择页和确认页均可按一次 Ctrl+C 取消。没有选择的智能体不写入；失败或中断会回滚技能文件。
 
-选择页、确认页按一次 Ctrl+C 即取消，退出码为 130，不再反复向已关闭的 readline 提问。输入流关闭同样会取消；写入期间收到中断则先回滚，不保留半套技能。
+以后更新只需：
 
-如果本机 npm 缓存仍运行旧的编号菜单，可使用固定最新版入口：
-
-```text
-npx --yes https://codeload.github.com/Blank-Tea/design-to-handoff/tar.gz/refs/tags/v0.4.0
+```sh
+design-to-handoff update
 ```
 
-Windows 的 CMD 与 macOS 的 Terminal 可使用同一条命令。PowerShell 若提示 npx.ps1 被脚本策略禁止，将开头的 npx 改为 npx.cmd，其余参数不变；不需要修改执行策略。此入口直接下载 GitHub HTTPS 源码包，不依赖 Git 的 SSH 或凭证配置。
+默认检查已发布的稳定版本，自动检测已安装的全局技能目标，不重复选择智能体。有新版才下载并升级命令行，再同步技能；已经最新时只查版本，不下载技能包、不重复备份。命令行已是最新但某个技能副本较旧时，直接用本地文件更新该副本。
+
+此前只用 npx 安装过技能的用户，需要执行一次上面的全局安装命令，之后即可用 update。命令行的 npm 全局目录需要可写，且其 bin 目录应在 PATH 中；按当前 Node.js 的用户级安装方式配置，不需要更改系统脚本策略。PowerShell 禁止 npm.ps1 时可把首次命令开头改为 npm.cmd。
+
+仍保留一次性 npx 入口：
+
+```sh
+npx --yes https://codeload.github.com/Blank-Tea/design-to-handoff/tar.gz/refs/tags/v0.5.0
+```
+
+一次性入口不会永久注册终端命令；推荐使用全局安装获得 update。
 
 ### 安装位置
 
@@ -57,7 +59,7 @@ Windows 的 CMD 与 macOS 的 Terminal 可使用同一条命令。PowerShell 若
 安装到当前项目，用以下命令，菜单仍支持多选：
 
 ```text
-npx --yes https://codeload.github.com/Blank-Tea/design-to-handoff/tar.gz/refs/heads/master --scope project
+design-to-handoff --scope project
 ```
 
 项目目录分别是 `.agents/skills/`、`.claude/skills/`、`.codebuddy/skills/`、`.cursor/skills/`、`.opencode/skills/`。
@@ -65,10 +67,10 @@ npx --yes https://codeload.github.com/Blank-Tea/design-to-handoff/tar.gz/refs/he
 如需不交互、明确指定三个智能体：
 
 ```text
-npx --yes https://codeload.github.com/Blank-Tea/design-to-handoff/tar.gz/refs/heads/master --agents codex,claude-code,codebuddy --yes
+design-to-handoff --agents codex,claude-code,codebuddy --yes
 ```
 
-最后的 `--yes` 才是安装器确认选项。只看计划不写文件可使用 `--agents codex,claude-code,codebuddy --dry-run`。可用 `--root` 指定自定义用户/项目根目录；未指定时自动发现，不需要填写个人路径。
+`--yes` 是安装器的非交互确认选项。只看计划不写文件可使用 `--agents codex,claude-code,codebuddy --dry-run`。可用 `--root` 指定自定义用户/项目根目录；未指定时自动发现，不需要填写个人路径。
 
 安装器只安装一个完整的 `design-to-handoff/` 目录，包含全部内部说明、问答适配和验收脚本。同名入口会先显示提醒，确认后备份到各智能体配置目录下 `.design-to-handoff-backups/` 再替换。从 0.3.x 及更早版本更新时，本包旧的六个子技能入口也会完整备份并移出技能目录，避免列表继续混乱；无关技能不改变。安装或迁移中途失败会恢复旧入口及原有内容。
 
@@ -123,9 +125,19 @@ npx --yes https://codeload.github.com/Blank-Tea/design-to-handoff/tar.gz/refs/he
 
 ## 更新与卸载
 
-重新执行同一安装命令，选择需要更新的所有智能体，核对并确认后安装当前仓库版本；现有主入口和旧子入口会保留备份。每个宿主可能有独立目录，更新 Codex 不会自动更新 CodeBuddy/Claude Code 等副本，应在菜单中勾选实际使用的目标。
+运行 `design-to-handoff update` 更新已安装的全局技能。它检查当前环境配置的目录以及标准目录，只更新已经存在的本包入口；不会给未安装的智能体新建技能。旧入口先备份，技能同步失败则回滚。更新全局命令行需要 npm 全局目录的写权限；若命令行已升级但技能同步失败，下次 update 会继续同步本地副本。
 
-需要固定获得本次版本、避免沿用缓存时，使用上面的 `v0.4.0` 地址。源码使用者可 `git pull --ff-only`，再运行 `node bin/install.mjs` 选择安装目标；只拉取源码不会替换已安装副本。
+项目和自定义根目录需要沿用原来的选项：
+
+```sh
+design-to-handoff update --scope project
+design-to-handoff update --root /path/to/custom-root
+design-to-handoff update --agents codex,codebuddy
+```
+
+`update --dry-run` 仅查询版本并显示目标，不下载、不写入；`--version` 显示当前命令行版本。查询失败、网络超时或下载失败会报错，技能文件保持原状，不要求登录 GitHub，也不自动重试覆盖本地内容。
+
+全局更新不会自动遍历磁盘查找项目副本。源码使用者仍可 `git pull --ff-only` 后运行 `node bin/install.mjs`；只拉取源码不会替换已安装副本。
 
 卸载时只移除本包 skill，保留其他技能：
 
@@ -141,7 +153,7 @@ OpenCode 的原生项目安装目录为 `.opencode/skills/`，与部分通用安
 
 安装器是纯 JavaScript：文件处理使用 Node.js 标准库，终端多选使用固定版本的 @clack/prompts，依赖随 npm 自动下载。无原生扩展、Bash/PowerShell 脚本、平台专用二进制和芯片相关依赖。技能正文使用通用 Agent Skills 格式；`agents/openai.yaml` 只是 Codex 可选界面元信息，其他宿主读取标准 SKILL.md。
 
-Windows x64、macOS Intel x64、macOS Apple Silicon arm64 通过仓库 Actions 持续验证安装器、npm 打包和验收脚本。此前版本的[三平台通过记录](https://github.com/Blank-Tea/design-to-handoff/actions/runs/40813988394)仅对应历史提交，0.4.0 结果请查看当前提交的 Actions。该测试验证文件安装和脚本执行，不代表所有智能体的在线设计工具都已端到端测试。持续状态见[跨平台测试](https://github.com/Blank-Tea/design-to-handoff/actions/workflows/portability.yml)和[验证记录](验证记录.md)。
+Windows x64、macOS Intel x64、macOS Apple Silicon arm64 通过仓库 Actions 持续验证安装器、npm 打包和验收脚本。此前版本的[三平台通过记录](https://github.com/Blank-Tea/design-to-handoff/actions/runs/40813988394)仅对应历史提交，当前版本结果请查看对应提交的 Actions。该测试验证文件安装和脚本执行，不代表所有智能体的在线设计工具都已端到端测试。持续状态见[跨平台测试](https://github.com/Blank-Tea/design-to-handoff/actions/workflows/portability.yml)和[验证记录](验证记录.md)。
 
 安装本身不需要 Python。运行可选交付验收脚本才需 Python 3.9+：Windows 用 `py -3` 或确认指向 Python 3 的 `python`，macOS 用 `python3`。执行技能的 AI 应先探测环境、选择可用命令，详见[运行兼容说明](skills/design-to-handoff/references/runtime-compatibility.md)。
 
@@ -158,5 +170,7 @@ python3 tests/test_delivery.py
 ```
 
 交付验收脚本自身只依赖 Python 标准库；PyYAML 仅用于维护技能包元信息。
+
+可选的 HTTP 故障模拟使用 Postman CLI 1.77+：先运行 `postman simulation run postman/simulations/updater/updater.sim.yaml --port auto --no-history`，再用输出的 github 成员地址执行 `node tests/simulation-check.mjs <成员地址>`；错误配置为同目录 updater-error.sim.yaml，检查命令另加 `error`。模拟不随 npm 包分发，不需要部署云服务。
 
 分发方式参考 [skills CLI](https://github.com/vercel-labs/skills)。本仓库不是 Figma、Penpot 或 OpenAI 官方发布的技能。

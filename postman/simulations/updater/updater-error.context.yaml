@@ -1,0 +1,16 @@
+purpose:
+  stands_in_for: A GitHub version-check dependency returning HTTP 503.
+  unblocks: Validate that failed version discovery cannot alter installed skills.
+assumptions:
+  - id: failed-discovery-preserves-installation
+    status: supported
+    claim: In the simulated 503 scenario, the updater reports failure and leaves the installed skill version and files unchanged without creating backups.
+    reason: The actual updateInstallation function was run against the error-injected Postman member and the caller's error and filesystem state were asserted.
+    verification: On 2026-10-29 tests/simulation-check.mjs in error mode observed HTTP 503, retained the seeded 0.4.0 marker, and verified that no backup directory had been created. Injected errors are not member request events; the caller outcome was checked directly.
+    source: tests/simulation-check.mjs; postman/simulations/updater/updater-error.sim.yaml
+    updated_at: "2026-10-29"
+fingerprints:
+  - id: updater-0-5-0-draft
+    date: "2026-10-29"
+    commit: aaf0cbd6ac0f2d53024a91e03172afe8141390d2 plus uncommitted updater 0.5.0 changes
+    cli: Postman 1.77.0

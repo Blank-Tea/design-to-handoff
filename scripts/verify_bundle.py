@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Validate the portable skill pack without knowing its checkout directory."""
 import re
+import json
 from pathlib import Path
 import yaml
 
@@ -10,6 +11,8 @@ NAMES = {'design-to-handoff'}
 
 def main():
     skill_root = ROOT / 'skills'
+    version = json.loads((ROOT / 'package.json').read_text(encoding='utf-8'))['version']
+    assert json.loads((skill_root / 'design-to-handoff/version.json').read_text(encoding='utf-8'))['version'] == version
     assert {p.name for p in skill_root.iterdir() if p.is_dir()} == NAMES
     for name in sorted(NAMES):
         path = skill_root / name

@@ -1,0 +1,8 @@
+simulation: handoff-updater
+routing: path
+mocks:
+  - name: github-tags
+    routeKey: github
+    origin:
+      - api.github.com
+    path: postman/mocks/github-tags

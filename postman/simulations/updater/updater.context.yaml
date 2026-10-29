@@ -1,0 +1,23 @@
+purpose:
+  stands_in_for: Public GitHub matching tag refs used by the updater.
+  unblocks: Check-only no-op and local skill synchronization without downloading a package.
+assumptions:
+  - id: public-tag-ref-contract
+    status: supported
+    claim: The public repository matching-refs endpoint returns an array of tag refs and can be read without credentials.
+    reason: GitHub documents this exact endpoint for public resources; the real updater also queried it without Authorization.
+    verification: On 2026-10-29 the real latestVersion function returned 0.4.0 from GitHub. In Postman 1.77.0, two GET requests to the same route returned 200 and the real updateInstallation function performed a no-op followed by a local-source sync.
+    source: https://docs.github.com/en/rest/git/refs#list-matching-references; lib/updater.mjs; tests/simulation-check.mjs; postman/mocks/github-tags/default.js
+    updated_at: "2026-10-29"
+  - id: already-current-does-not-download
+    status: supported
+    claim: In the scenarios run, a current installation performed a metadata check without a package download or replacement; an older skill copy synchronized from the current local CLI.
+    reason: The real updater ran against the local Postman mock with a download callback that fails if called; both assertions passed and request logs showed the metadata GETs.
+    verification: Ran tests/simulation-check.mjs against the local github member on 2026-10-29. The mock's 0.5.0 ref was synthetic at test time; this does not establish that every future GitHub release is valid or reachable.
+    source: tests/simulation-check.mjs; postman/simulations/updater/updater.sim.yaml
+    updated_at: "2026-10-29"
+fingerprints:
+  - id: updater-0-5-0-draft
+    date: "2026-10-29"
+    commit: aaf0cbd6ac0f2d53024a91e03172afe8141390d2 plus uncommitted updater 0.5.0 changes
+    cli: Postman 1.77.0

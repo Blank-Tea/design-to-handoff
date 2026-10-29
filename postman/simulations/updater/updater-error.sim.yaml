@@ -1,0 +1,13 @@
+simulation: handoff-updater-error
+routing: path
+mocks:
+  - name: github-tags
+    routeKey: github
+    origin:
+      - api.github.com
+    path: postman/mocks/github-tags
+    scenarios:
+      - overrides:
+          conditions:
+            error:
+              status_code: 503

@@ -1,6 +1,6 @@
 {
   "name": "design-to-handoff",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "private": true,
   "description": "Single-entry design handoff skill with native questions across agent hosts",
   "type": "module",
@@ -18,7 +18,7 @@
     "node": ">=22.20.0"
   },
   "scripts": {
-    "test": "node --test tests/installer.test.mjs"
+    "test": "node --test tests/installer.test.mjs tests/updater.test.mjs"
   },
   "repository": {
     "type": "git",
