@@ -21,7 +21,16 @@
 
 ## 浏览器与云端连接
 
-使用当前 WorkBuddy 实际可用的浏览器、连接器或 MCP 能力。若暴露 connect_cloud_service 等连接入口，先读真实参数与服务目录，只有服务确实存在时才选用，不能虚构 Figma/Penpot 的 serviceId 或 OAuth URL。
+使用当前 WorkBuddy 实际可用的浏览器、连接器或 MCP 能力。初始工具列表不代表全部可连接服务；连接可能需要延迟加载、授权或启用。不能据此在平台选择之前结束设计交付。
+
+### 平台选择后的连接引导
+
+1. **先问平台**：设计预览验收后，使用实际 AskUserQuestion 收集 Figma / Penpot / 两者或暂缓，保留自定义输入。已知平台复用；未连接不删掉平台选项。用户已明确“上传到 Figma”就直接进入该平台连接，不再问一次。
+2. **读宿主声明**：检查当前会话的 `<declared_mcp_server_names>`、已声明依赖和工具说明，匹配选定平台的精确服务器标识；展示名、平台品牌和 serverName 不能互相猜代。只请求本次所选平台需要的服务，不把全部已声明连接器都列入。
+3. **原生连接优先**：所需 MCP/连接器未连接、授权失效/失败、工具未加载，或原操作返回 need_auth/authUrl/缺 API key 时，优先用 **ToolSearch** 加载 **workbuddy_request_mcp_connection**，随即按实际 schema 调用，将匹配的精确标识放入 **servers**。不能只搜索业务工具后说“不存在”，也不能先给手动设置教程、打开另一路浏览器或发 Penpot key 题来替代宿主连接卡片。工具名称及参数以运行时为准，不能调用不存在的接口。
+4. **等待并恢复**：原生卡片处于待处理时等实际结果；connected 后重新发现业务工具，重试原失败操作一次，做账号/目标只读探测，然后继续创建/上传与远端读回。连接成功只证明已连接，仍需核对写入能力。failed/skipped 本轮不再次请求同一服务，不通过直接密钥或浏览器路线绕过；说明该服务缺口并保留继续点。用户选两平台时分别记录，继续另一已授权且可用的平台。
+5. **没有对应声明时**：不得向 servers 填猜测的 `figma`/`penpot`。先通过实际可用的连接器发现机制查找；如暴露 search_plugins、list_installed_plugins、suggest_plugin_install，读取真实 schema/候选并用真实 pluginName/ID 发起连接/安装卡片。只有宿主目录确有该平台时才能选用；connect_cloud_service 不能仅凭名字当成任意第三方连接器。发现后按宿主指引建立声明、刷新并继续。已绑定但当前会话未启用、需要重载或没有可安装候选时，说明具体结果及宿主返回的启用/恢复入口，保留平台选择；不宣称所有 WorkBuddy 都支持自动写入这两个平台。
+6. **恢复现有设计**：若旧流程停在“当前会话没有可用的 Figma / Penpot 连接”，复用已经生成的源设计、规范和预览，从缺失的平台选择继续。不要重问需求/基础参数，也不要重新生成整套设计。
 
 [设计前上下文](design-context.md)和[云端交付](cloud-handoff.md)的顺序保持不变：先读取已有设计及解决冲突，后生成；上传时复核并自动创建/追加真实图层。WorkBuddy 的本地预览、轻量网页发布或返回 HTML 产物不能替代远程 Figma/Penpot Design 文件。缺少云写入或浏览器能力时说明具体缺口并保留继续点，不把用户手动导入作为默认上传结果。
 
@@ -30,4 +39,4 @@
 - [WorkBuddy 技能管理](https://www.codebuddy.cn/docs/workbuddy/From-Beginner-to-Expert-Guide/Function-Description/Skills-Market)
 - [WorkBuddy 项目级 .codebuddy 配置](https://www.codebuddy.cn/docs/workbuddy/From-Beginner-to-Expert-Guide/Function-Description/Project)
 - [WorkBuddy 更新日志中的原生提问等待状态](https://www.workbuddy.cn/docs/workbuddy/Changelog)
-- 本机 WorkBuddy 5.8.3 的只读应用检查确认 `.workbuddy/skills` 原生路径与 AskUserQuestion 支持；核对日期 2026-10-30。没有修改 WorkBuddy 应用文件或账号设置，没有执行桌面问答与云端上传的端到端实测。
+- 本机 WorkBuddy 5.8.3 的只读应用检查确认 `.workbuddy/skills` 原生路径与 AskUserQuestion 支持；核对日期 2026-10-30。另只读核对了当前应用的 mcp_connection_guidance：ToolSearch 加载 workbuddy_request_mcp_connection、servers 使用已声明精确标识、connected 后重试、failed/skipped 本轮停止同项。该指引只证明宿主有连接引导机制，不证明本次会话已声明 Figma/Penpot 或具备写入权限。没有修改 WorkBuddy 应用文件或账号设置，没有执行桌面问答与云端上传的端到端实测。

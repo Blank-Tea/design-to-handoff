@@ -13,7 +13,7 @@
 首次把命令行工具安装到 npm 的全局目录：
 
 ```sh
-npm install --global https://codeload.github.com/Blank-Tea/design-to-handoff/tar.gz/refs/tags/v0.8.0
+npm install --global https://codeload.github.com/Blank-Tea/design-to-handoff/tar.gz/refs/tags/v0.8.1
 ```
 
 再选择要安装技能的智能体：
@@ -37,7 +37,7 @@ design-to-handoff update
 仍保留一次性 npx 入口：
 
 ```sh
-npx --yes https://codeload.github.com/Blank-Tea/design-to-handoff/tar.gz/refs/tags/v0.8.0
+npx --yes https://codeload.github.com/Blank-Tea/design-to-handoff/tar.gz/refs/tags/v0.8.1
 ```
 
 一次性入口不会永久注册终端命令；推荐使用全局安装获得 update。
@@ -115,9 +115,11 @@ WorkBuddy 原生用户级目录与 CodeBuddy 不同，不能只更新 `.codebudd
 
 ## 选择平台后自动完成云端交付
 
+初始没有 Figma/Penpot 连接也会先询问上传平台，再发起连接/授权，不在选择前结束。WorkBuddy 对已声明的服务优先使用原生 MCP 连接卡片，连接成功后恢复上传；没有对应服务声明时先实际发现连接器，无法建立连接才报告具体缺口。更新后可要求重新读取技能，并从未完成的平台选择继续，复用已有设计而非重做。
+
 先在设计生成前确认新建还是补充/修改。已有设计必须提前提供实际项目/文件/画板链接，读取样式和组件并处理冲突后才生成；需要的浏览器授权、Penpot MCP key 问答也提前完成，只读不写。新建设计可以在验收后再选择上传平台。上传时复用目标和既有连接，只复核身份、权限及相关基线，再自动创建/追加、命名、构建并读回。默认不要求你自己建目录、手动导入或改名。
 
-Penpot 官方远程 MCP 首次需要 MCP key。本技能会通过独立的【Penpot MCP 密钥】问答收集，优先秘密输入，然后配置所选宿主连接；不回显、不写入设计、仓库或交付记录。有效连接复用，不每次重新索取。普通网页登录和提供 key 不代表目标文件已可写，仍需验证并连接实际文件。
+Penpot 官方远程 MCP 首次需要 MCP key。宿主有受管连接时优先使用其连接/凭证界面；没有受管流程的直连方案才通过独立的【Penpot MCP 密钥】问答收集，优先秘密输入，然后配置所选宿主连接；不回显、不写入设计、仓库或交付记录。有效连接复用，不每次重新索取。普通网页登录和提供 key 不代表目标文件已可写，仍需验证并连接实际文件。
 
 补充已有项目的链接在生成前收集：项目默认新增独立文件，文件默认新增业务页面，画板默认在可用区域追加设计。先读已有样式/组件，保留旧内容；只有明确要求才更新指定节点。中断后复用真实 ID 续传，避免重复空文件。
 
