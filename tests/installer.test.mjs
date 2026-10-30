@@ -52,7 +52,8 @@ test('three selected agents receive one complete skill with internal modules; un
   for (const agent of plan) {
     const entry = path.join(agent.directory, 'design-to-handoff');
     assert.equal((await fs.readdir(agent.directory)).length, 1);
-    assert.equal((await fs.readdir(path.join(entry, 'references', 'stages'))).length, 6);
+    assert.deepEqual((await fs.readdir(path.join(entry, 'references', 'stages'))).sort(),
+      (await fs.readdir(path.join(source, 'design-to-handoff', 'references', 'stages'))).sort());
     await fs.access(path.join(entry, 'scripts', 'verify_delivery.py'));
     for (const item of await fs.readdir(entry, { recursive: true })) {
       if (path.basename(item).toLowerCase() === 'skill.md') assert.equal(item, 'SKILL.md');
