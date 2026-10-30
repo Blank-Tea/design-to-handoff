@@ -13,7 +13,7 @@
 首次把命令行工具安装到 npm 的全局目录：
 
 ```sh
-npm install --global https://codeload.github.com/Blank-Tea/design-to-handoff/tar.gz/refs/tags/v0.7.0
+npm install --global https://codeload.github.com/Blank-Tea/design-to-handoff/tar.gz/refs/tags/v0.8.0
 ```
 
 再选择要安装技能的智能体：
@@ -37,7 +37,7 @@ design-to-handoff update
 仍保留一次性 npx 入口：
 
 ```sh
-npx --yes https://codeload.github.com/Blank-Tea/design-to-handoff/tar.gz/refs/tags/v0.7.0
+npx --yes https://codeload.github.com/Blank-Tea/design-to-handoff/tar.gz/refs/tags/v0.8.0
 ```
 
 一次性入口不会永久注册终端命令；推荐使用全局安装获得 update。
