@@ -7,6 +7,7 @@
 - Codex：通常以 `$design-to-handoff` 调用。
 - Claude Code：通常以 `/design-to-handoff` 调用。
 - CodeBuddy：区分 IDE/插件与 Code CLI；插件提问读取[专用适配](codebuddy-plugin-input.md)，优先实际提供的 `ask_followup_question`。用宿主技能列表确认实际加载副本，不能假定共享目录的更新已同步到 `~/.codebuddy/skills` 等独立安装目录；不要将 `/skills` 列表命令误写成某个技能的专用调用语法。
+- WorkBuddy：按[桌面端适配](workbuddy-input.md)用技能界面或自然语言选择 design-to-handoff，原生问答通常为 AskUserQuestion。用户级目录为 ~/.workbuddy/skills；项目级按官方兼容机制使用 .codebuddy/skills，与 CodeBuddy 共用时安装器只写一份。
 - OpenCode：通过原生 skill 工具加载，或用自然语言指定 design-to-handoff；原生项目目录 .opencode/skills，全局目录 ~/.config/opencode/skills，尊重 XDG_CONFIG_HOME。
 - 其他兼容宿主：按其发现机制调用，阶段顺序和产物要求不变。
 

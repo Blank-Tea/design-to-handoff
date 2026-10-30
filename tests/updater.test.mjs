@@ -67,15 +67,15 @@ test('current version performs only metadata check; no download, replacement or 
   await assert.rejects(fs.access(path.join(path.dirname(plan[0].directory), '.design-to-handoff-backups')));
 })));
 
-test('all five already installed hosts sync older skills from local CLI without downloading', async () => sandbox(root => server(async (base, requests) => {
+test('all supported installed hosts sync older skills from local CLI without downloading', async () => sandbox(root => server(async (base, requests) => {
   const plan = buildPlan(AGENTS.map(a => a.id), { root, explicitRoot: true });
   await install(source, plan);
   for (const agent of plan) await fs.writeFile(path.join(agent.directory, 'design-to-handoff', 'version.json'), '{"version":"0.4.0"}');
   const result = await updateInstallation({ source, plan, currentVersion: version, check: checkAt(base + '/tags'),
     upgrade() { assert.fail('The local CLI already includes the latest source'); }, log() {} });
   assert.equal(result.status, 'synced');
-  assert.equal(result.installed, 5);
-  assert.equal(result.backups.length, 5);
+  assert.equal(result.installed, AGENTS.length);
+  assert.equal(result.backups.length, AGENTS.length);
   assert.equal(requests.length, 1);
   for (const agent of plan) assert.equal(JSON.parse(await fs.readFile(path.join(agent.directory, 'design-to-handoff', 'version.json'))).version, version);
 })));
@@ -90,7 +90,7 @@ test('update discovers only installed hosts, including legacy entries, and retai
   assert.equal(result.installed, 1);
   assert.equal(result.retired, 1);
   assert.deepEqual((await fs.readdir(plan[2].directory)).sort(), ['design-to-handoff', 'other']);
-  for (const index of [0, 1, 3, 4]) await assert.rejects(fs.access(plan[index].directory));
+  for (const agent of plan.filter(a => a.id !== 'codebuddy')) await assert.rejects(fs.access(agent.directory));
 }));
 
 test('no installation fails before remote check, dry run avoids downloads and file writes', async () => sandbox(async root => {
@@ -169,4 +169,26 @@ test('CLI --version and offline installed-only synchronization work without prom
   assert.equal(child.status, 0, child.stderr);
   assert.match(child.stdout, /更新完成/);
   assert.equal(JSON.parse(await fs.readFile(path.join(plan[0].directory, 'design-to-handoff', 'version.json'))).version, version);
+}));
+
+test('WorkBuddy-only updates reuse its installed native target without touching CodeBuddy', async () => sandbox(async root => {
+  const both = buildPlan(['codebuddy', 'workbuddy'], { root, explicitRoot: true });
+  await install(source, both);
+  for (const agent of both) await fs.writeFile(path.join(agent.directory, 'design-to-handoff', 'version.json'), '{"version":"0.6.1"}');
+  const selected = buildPlan(['workbuddy'], { root, explicitRoot: true });
+  const result = await updateInstallation({ source, plan: selected, currentVersion: version, check: async () => version, log() {} });
+  assert.equal(result.installed, 1);
+  assert.deepEqual(result.agents, ['workbuddy']);
+  assert.equal(JSON.parse(await fs.readFile(path.join(both[0].directory, 'design-to-handoff', 'version.json'))).version, '0.6.1');
+  assert.equal(JSON.parse(await fs.readFile(path.join(both[1].directory, 'design-to-handoff', 'version.json'))).version, version);
+}));
+
+test('project update with both product names updates and backs up their shared target once', async () => sandbox(async root => {
+  const plan = buildPlan(['workbuddy', 'codebuddy'], { root, scope: 'project', explicitRoot: true });
+  await install(source, plan);
+  await fs.writeFile(path.join(plan[0].directory, 'design-to-handoff', 'version.json'), '{"version":"0.6.1"}');
+  const result = await updateInstallation({ source, plan, currentVersion: version, check: async () => version, log() {} });
+  assert.equal(result.installed, 1);
+  assert.equal(result.backups.length, 1);
+  assert.deepEqual(result.agents, ['workbuddy', 'codebuddy']);
 }));

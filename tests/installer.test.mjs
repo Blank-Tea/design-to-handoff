@@ -23,7 +23,9 @@ test('numeric and named multi-selection, duplicates, all and cancellation', () =
   assert.deepEqual(parseSelection('a'), AGENTS.map(a => a.id));
   assert.deepEqual(parseSelection('q'), []);
   assert.deepEqual(parseSelection('5'), ['opencode']);
-  for (const input of ['', '0', '6', 'unknown']) assert.throws(() => parseSelection(input));
+  assert.deepEqual(parseSelection('6'), ['workbuddy']);
+  assert.deepEqual(parseSelection('WorkBuddy,codebuddy'), ['workbuddy', 'codebuddy']);
+  for (const input of ['', '0', '7', 'unknown']) assert.throws(() => parseSelection(input));
 });
 
 test('Windows paths include spaces and Unicode without shell quoting', () => {
@@ -103,12 +105,12 @@ test('upgrade retires all six legacy entries for every selected host and preserv
       await fs.writeFile(path.join(agent.directory, name, 'notes.txt'), `${agent.id}/${name}`);
     }
   }
-  assert.equal((await findConflicts(plan)).length, 35);
+  assert.equal((await findConflicts(plan)).length, AGENTS.length * (SKILLS.length + LEGACY_SKILLS.length));
   await assert.rejects(install(source, plan), /confirmation/);
   const result = await install(source, plan, { allowReplace: true });
-  assert.equal(result.installed, 5);
-  assert.equal(result.retired, 30);
-  assert.equal(result.backups.length, 35);
+  assert.equal(result.installed, AGENTS.length);
+  assert.equal(result.retired, AGENTS.length * LEGACY_SKILLS.length);
+  assert.equal(result.backups.length, AGENTS.length * (SKILLS.length + LEGACY_SKILLS.length));
   for (const agent of plan) {
     assert.deepEqual((await fs.readdir(agent.directory)).sort(), ['design-to-handoff', 'unrelated']);
     assert.equal(await fs.readFile(path.join(agent.directory, 'unrelated', 'notes.txt'), 'utf8'), `${agent.id}/unrelated`);
@@ -184,13 +186,13 @@ test('OpenCode uses native global/project paths and respects XDG configuration',
   assert.equal(buildPlan(['opencode'], { root: 'C:\\Profiles\\Test', env: {}, pathApi: path.win32 })[0].directory, 'C:\\Profiles\\Test\\.config\\opencode\\skills');
 });
 
-test('all five agents install the skill pack without optional OpenAI UI metadata', async () => sandbox(async root => {
+test('all supported agents install the skill pack without optional OpenAI UI metadata', async () => sandbox(async root => {
   const portableSource = path.join(root, 'source');
   await fs.cp(source, portableSource, { recursive: true });
   for (const name of SKILLS) await fs.rm(path.join(portableSource, name, 'agents'), { recursive: true, force: true });
   const plan = buildPlan(AGENTS.map(a => a.id), { root: path.join(root, 'destination'), explicitRoot: true });
   const result = await install(portableSource, plan);
-  assert.equal(result.installed, 5);
+  assert.equal(result.installed, AGENTS.length);
   for (const agent of plan) for (const name of SKILLS) {
     await fs.access(path.join(agent.directory, name, 'SKILL.md'));
     await assert.rejects(fs.access(path.join(agent.directory, name, 'agents', 'openai.yaml')));
@@ -297,3 +299,46 @@ test('cancellation during writes rolls back the earlier agents and original skil
 }));
 
 console.log(`Installer tests running on ${process.platform}/${process.arch}`);
+
+test('WorkBuddy uses its native global directory and compatible CodeBuddy project directory', () => {
+  assert.equal(buildPlan(['workbuddy'], { root: '/profiles/Design User', env: {}, pathApi: path.posix })[0].directory, '/profiles/Design User/.workbuddy/skills');
+  assert.equal(buildPlan(['workbuddy'], { root: '/projects/design', scope: 'project', env: {}, pathApi: path.posix })[0].directory, '/projects/design/.codebuddy/skills');
+  assert.equal(buildPlan(['workbuddy'], { root: 'C:\\Users\\Design User', env: {}, pathApi: path.win32 })[0].directory, 'C:\\Users\\Design User\\.workbuddy\\skills');
+  assert.equal(buildPlan(['workbuddy'], { root: 'D:\\Project Space', scope: 'project', env: {}, pathApi: path.win32 })[0].directory, 'D:\\Project Space\\.codebuddy\\skills');
+});
+
+test('selecting CodeBuddy and WorkBuddy shares one project destination and preserves both selections', async () => sandbox(async root => {
+  const plan = buildPlan(['codebuddy', 'workbuddy'], { root, scope: 'project', explicitRoot: true });
+  assert.equal(plan.length, 1);
+  assert.deepEqual(plan[0].agentIds, ['codebuddy', 'workbuddy']);
+  const old = path.join(plan[0].directory, 'design-to-handoff');
+  await fs.mkdir(old, { recursive: true }); await fs.writeFile(path.join(old, 'notes.txt'), 'original');
+  let writes = 0;
+  const result = await install(source, plan, { allowReplace: true, beforeMove() { writes++; } });
+  assert.equal(writes, 1);
+  assert.equal(result.installed, 1);
+  assert.equal(result.backups.length, 1);
+  assert.deepEqual(result.agents, ['codebuddy', 'workbuddy']);
+  assert.equal(await fs.readFile(path.join(result.backups[0], 'notes.txt'), 'utf8'), 'original');
+  assert.deepEqual(await fs.readdir(plan[0].directory), ['design-to-handoff']);
+  await assert.rejects(fs.access(path.join(root, '.workbuddy')));
+}));
+
+test('WorkBuddy-only CLI installation writes one native skill and leaves CodeBuddy untouched', async () => sandbox(async root => {
+  const result = spawnSync(process.execPath, [cli, '--agents', 'workbuddy', '--root', root, '--yes'], { encoding: 'utf8' });
+  assert.equal(result.status, 0, result.stderr);
+  const native = path.join(root, '.workbuddy', 'skills');
+  assert.deepEqual(await fs.readdir(native), ['design-to-handoff']);
+  await fs.access(path.join(native, 'design-to-handoff', 'references', 'workbuddy-input.md'));
+  await assert.rejects(fs.access(path.join(root, '.codebuddy')));
+}));
+
+test('shared project replacement failure restores its only original copy', async () => sandbox(async root => {
+  const plan = buildPlan(['workbuddy', 'codebuddy'], { root, scope: 'project', explicitRoot: true });
+  assert.equal(plan.length, 1);
+  const old = path.join(plan[0].directory, 'design-to-handoff');
+  await fs.mkdir(old, { recursive: true }); await fs.writeFile(path.join(old, 'notes.txt'), 'original');
+  await assert.rejects(install(source, plan, { allowReplace: true, beforeMove() { throw new Error('shared target failure'); } }), /shared target failure/);
+  assert.deepEqual(await fs.readdir(old), ['notes.txt']);
+  assert.equal(await fs.readFile(path.join(old, 'notes.txt'), 'utf8'), 'original');
+}));

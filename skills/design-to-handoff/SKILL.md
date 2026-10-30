@@ -17,7 +17,7 @@ description: 分步收集需求文档、补充说明、设计方向与可选参�
 
 ## 提问节奏
 
-以下是**所有智能体宿主共用的交互规则**，适用于 Codex、Claude Code、CodeBuddy（插件/IDE/CLI）、Cursor、OpenCode 及其他兼容宿主；不是某一产品的可选特例。开始收集输入前读取[内置问答约定](references/interactive-input.md)，本入口及所有内部阶段统一遵守。
+以下是**所有智能体宿主共用的交互规则**，适用于 Codex、Claude Code、CodeBuddy（插件/IDE/CLI）、WorkBuddy、Cursor、OpenCode 及其他兼容宿主；不是某一产品的可选特例。开始收集输入前读取[内置问答约定](references/interactive-input.md)，本入口及所有内部阶段统一遵守。
 
 需要询问用户时，必须优先使用当前宿主可用的原生结构化问答，提供可点击选项和自定义输入；不要用 final/完成工具或纯文本菜单代替可用的问答控件。开放的文档地址使用独立输入题；宿主要求题目必须带选项时保留其原生自定义输入入口。用户回答后在当前流程自动继续，不要求再说“继续”或重新调用 skill。各宿主只适配工具名称、参数和等待方式，不改变提问顺序、必填性、跳过规则及单入口。确实没有可用原生问答时，明确说明当前能力缺口后才降级，不能默默改为纯文本提问。
 
@@ -27,13 +27,13 @@ description: 分步收集需求文档、补充说明、设计方向与可选参�
 1. **【需求文档】必填**：收集实际文件路径、目录、在线链接或已提供附件。没有有效来源时留在本题，不能用空值、“跳过”、选项标签或 AI 推荐替代。
 2. **【补充文档】可选**：需求来源确定后单独询问，提供“跳过（无补充文档）”及填写地址的方式。用户明确跳过、回答“无”或主动提交空白可选题后继续，不强求补充文件；未作答与已提交空白要区分。
 
-复用已提供的文档及明确的“无补充”选择，仅询问缺失题。地址可以是文件、目录或在线链接；不要只收集“本地/在线”类型。多版本目录用真实候选作为后续选项。CodeBuddy 插件必须按[插件问答适配](references/codebuddy-plugin-input.md)调用其原生提问工具。
+复用已提供的文档及明确的“无补充”选择，仅询问缺失题。地址可以是文件、目录或在线链接；不要只收集“本地/在线”类型。多版本目录用真实候选作为后续选项。CodeBuddy 插件按[插件问答适配](references/codebuddy-plugin-input.md)，WorkBuddy 按[桌面端适配](references/workbuddy-input.md)调用各自的原生问答工具。
 
 不将技能创建者在其他聊天中的业务、语言和设计偏好视为本次需求。
 
 ## 宿主与操作系统
 
-本技能应在 Codex、Claude Code、CodeBuddy 等支持 Agent Skills 的宿主中使用，不依赖作者本机。第一次运行按[运行兼容说明](references/runtime-compatibility.md)识别宿主、操作系统与工具。使用宿主自身的提问、读文件、浏览器和 MCP 能力，按实际暴露的工具及模式限制选择问答接口。Windows、macOS Intel 和 Apple Silicon 共用同一份正文；不强制使用 Bash、macOS 桌面自动化或某个芯片专用程序。
+本技能应在 Codex、Claude Code、CodeBuddy、WorkBuddy 等支持 Agent Skills 的宿主中使用，不依赖作者本机。第一次运行按[运行兼容说明](references/runtime-compatibility.md)识别宿主、操作系统与工具。使用宿主自身的提问、读文件、浏览器和 MCP 能力，按实际暴露的工具及模式限制选择问答接口。Windows、macOS Intel 和 Apple Silicon 共用同一份正文；不强制使用 Bash、macOS 桌面自动化或某个芯片专用程序。
 
 ## 按顺序执行
 

@@ -4,7 +4,7 @@
 
 只提供 **design-to-handoff 一个可见技能入口**。需求、设计方向、参考、设计生成、Figma/Penpot 交付继续分为六份内部说明，按阶段读取，不单独出现在技能列表中。
 
-**所有智能体采用同一交互规则**：优先调用宿主原生问答，选择题支持选项和自定义输入；先单独询问【需求文档｜必填】，再单独询问【补充文档｜可选、可跳过】。回答后自动继续，不要求再发送“继续”。Codex、Claude Code、CodeBuddy、Cursor、OpenCode 的差异仅是工具协议。当前模式确实没有原生问答时，须先说明能力限制，不能用文字菜单冒充控件。
+**所有智能体采用同一交互规则**：优先调用宿主原生问答，选择题支持选项和自定义输入；先单独询问【需求文档｜必填】，再单独询问【补充文档｜可选、可跳过】。回答后自动继续，不要求再发送“继续”。Codex、Claude Code、CodeBuddy、WorkBuddy、Cursor、OpenCode 的差异仅是工具协议。当前模式确实没有原生问答时，须先说明能力限制，不能用文字菜单冒充控件。
 
 ## 安装一次，之后直接更新
 
@@ -13,7 +13,7 @@
 首次把命令行工具安装到 npm 的全局目录：
 
 ```sh
-npm install --global https://codeload.github.com/Blank-Tea/design-to-handoff/tar.gz/refs/tags/v0.6.1
+npm install --global https://codeload.github.com/Blank-Tea/design-to-handoff/tar.gz/refs/tags/v0.7.0
 ```
 
 再选择要安装技能的智能体：
@@ -37,7 +37,7 @@ design-to-handoff update
 仍保留一次性 npx 入口：
 
 ```sh
-npx --yes https://codeload.github.com/Blank-Tea/design-to-handoff/tar.gz/refs/tags/v0.6.1
+npx --yes https://codeload.github.com/Blank-Tea/design-to-handoff/tar.gz/refs/tags/v0.7.0
 ```
 
 一次性入口不会永久注册终端命令；推荐使用全局安装获得 update。
@@ -51,6 +51,7 @@ npx --yes https://codeload.github.com/Blank-Tea/design-to-handoff/tar.gz/refs/ta
 | Codex | `~/.agents/skills/` | `%USERPROFILE%\.agents\skills\` |
 | Claude Code | `~/.claude/skills/` | `%USERPROFILE%\.claude\skills\` |
 | CodeBuddy | `~/.codebuddy/skills/` | `%USERPROFILE%\.codebuddy\skills\` |
+| WorkBuddy | `~/.workbuddy/skills/` | `%USERPROFILE%\.workbuddy\skills\` |
 | Cursor | `~/.cursor/skills/` | `%USERPROFILE%\.cursor\skills\` |
 | OpenCode | `~/.config/opencode/skills/` | `%USERPROFILE%\.config\opencode\skills\` |
 
@@ -62,7 +63,7 @@ npx --yes https://codeload.github.com/Blank-Tea/design-to-handoff/tar.gz/refs/ta
 design-to-handoff --scope project
 ```
 
-项目目录分别是 `.agents/skills/`、`.claude/skills/`、`.codebuddy/skills/`、`.cursor/skills/`、`.opencode/skills/`。
+项目目录分别是 `.agents/skills/`、`.claude/skills/`、`.codebuddy/skills/`、`.cursor/skills/`、`.opencode/skills/`；WorkBuddy 按官方项目兼容机制也使用 `.codebuddy/skills/`。同时勾选 WorkBuddy 和 CodeBuddy 时，同一项目目录只安装、备份或更新一次。
 
 如需不交互、明确指定三个智能体：
 
@@ -81,16 +82,30 @@ design-to-handoff --agents codex,claude-code,codebuddy --yes
 - Codex：`$design-to-handoff`。
 - Claude Code：`/design-to-handoff`。
 - CodeBuddy：用 `/skills` 查看已加载技能，然后说“请使用 design-to-handoff 按步骤完成设计交付”。
+- WorkBuddy：在“专家·技能·连接器 → 技能 → 已安装”查看，用自然语言指定 design-to-handoff；原生问答使用实际提供的 AskUserQuestion。
 - OpenCode：通过其原生 skill 加载机制，或直接说“请加载 design-to-handoff”；无须读取 openai.yaml。
 - Cursor 或其他兼容宿主：按其技能界面选择，或用自然语言指定技能名称。
 
 首次安装只放置技能说明、维护信息和验收脚本，不含作者账号或密钥。实际读取已有设计时就发现平台工具并引导必要连接/授权，新建设计的上传连接可留到验收后；平台仍须提供可用的浏览器/写入能力。每位使用者使用自己的账号，通过问答完成连接；后续文件操作由智能体执行。无需作者电脑上的路径、配置或文件。
 
+### WorkBuddy 安装与更新
+
+更新命令行后，首次为 WorkBuddy 安装技能：
+
+```sh
+design-to-handoff update
+design-to-handoff --agents workbuddy
+```
+
+第一条只更新已有目标，不会自动给尚未安装的宿主新增技能；第二条才安装 WorkBuddy。已安装后直接使用 `design-to-handoff update`，或限定 `design-to-handoff update --agents workbuddy`。项目安装/更新沿用 `--scope project`。
+
+WorkBuddy 原生用户级目录与 CodeBuddy 不同，不能只更新 `.codebuddy/skills` 就宣称桌面原生副本已同步。[WorkBuddy 适配说明](skills/design-to-handoff/references/workbuddy-input.md)记录了路径、提问和连接器规则；项目兼容目录的来源是 [WorkBuddy 官方项目配置](https://www.codebuddy.cn/docs/workbuddy/From-Beginner-to-Expert-Guide/Function-Description/Project)。
+
 ## 为什么存在 agents/openai.yaml
 
 这是 Codex 的可选界面扩展，只有显示名称、简介和默认提示词，不是 OpenAI SDK、模型配置或运行依赖。通用入口是 SKILL.md；references/ 是按需阅读的补充文档，scripts/ 是按需执行的本地工具。此处 agents/ 不是多智能体安装目录，也不表示会启动额外 AI。
 
-其他宿主按其标准技能机制读取 SKILL.md。本包有自动化测试：移除可选 agents/ 后，仍能为五种目标各安装一个完整技能目录。因此无须编造各宿主不识别的 claude.yaml、cursor.yaml 等文件。独立宿主能否完成实际设计上传，仍取决于其可用工具与授权，不能用安装通过代替端到端验证。
+其他宿主按其标准技能机制读取 SKILL.md。本包有自动化测试：移除可选 agents/ 后，仍能为六种目标各安装一个完整技能目录。因此无须编造各宿主不识别的 claude.yaml、cursor.yaml 等文件。独立宿主能否完成实际设计上传，仍取决于其可用工具与授权，不能用安装通过代替端到端验证。
 
 ## 工作流程
 
@@ -155,7 +170,7 @@ design-to-handoff update --agents codex,codebuddy
 npx --yes skills@1.7.4 remove --skill design-to-handoff --agent codex claude-code codebuddy --global --yes
 ```
 
-将 `--agent` 后面的名字改为实际需卸载的智能体；项目安装不带 `--global`。卸载不删除安装器保存的备份。
+将 `--agent` 后面的名字改为该工具实际支持的目标；项目安装不带 `--global`。卸载不删除安装器保存的备份。WorkBuddy 原生副本可通过其已安装技能界面移除，或仅移除 `.workbuddy/skills/design-to-handoff`；不假定旧版通用卸载器识别 `workbuddy`。项目级 `.codebuddy/skills/design-to-handoff` 与 CodeBuddy 共用，移除这份副本会同时影响两者。
 
 OpenCode 的原生项目安装目录为 `.opencode/skills/`，与部分通用安装器采用的 `.agents/skills/` 不同。项目级卸载请在 OpenCode 的技能管理中处理，或只移除 `.opencode/skills/` 下本包的 design-to-handoff 目录；不要假设上述通用卸载命令会找到原生项目目录。自定义根目录也应按实际安装计划处理。
 

@@ -22,6 +22,7 @@
 - 只有当前模式明确允许时，才使用同步 `request_user_input`。例如说明标注 Plan mode only 时，不能在 Default 模式调用，也不要仅为显示问卷切换模式。
 - Claude Code 的 `AskUserQuestion`、OpenCode 的 question 或其他宿主的对应能力，以实际工具契约为准。不要臆造工具名或照搬另一宿主的参数。
 - CodeBuddy **IDE/插件**先读[插件问答适配](codebuddy-plugin-input.md)，识别原生 `ask_followup_question`；它的 `question` / `options` 与 Codex 的 `title` 文本题不同，不能照抄下面的 Codex 示例。CodeBuddy Code **CLI**另按实际暴露的 `AskUserQuestion` 契约执行，两者不可混用。
+- WorkBuddy 桌面端按[专用适配](workbuddy-input.md)优先调用实际提供的 `AskUserQuestion`，不要仅因产品相近就套用 CodeBuddy 插件工具名。待答卡片不能当执行权限自动批准。
 - Cursor 及其他兼容宿主同样先识别内置提问/表单能力，包括直接暴露的工具或宿主明确支持的交互入口；不因不是 Codex 就默认退回文字问答。未暴露或当前模式不允许的能力不能凭产品名称假定可用。
 - 确实没有当前模式可用的内置问答工具时，才说明限制并改用普通聊天提问。技能文本不能自行创建原生问答控件，也不能保证所有宿主都具有相同等待体验。
 

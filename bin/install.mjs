@@ -50,7 +50,7 @@ async function main() {
   const packageVersion = JSON.parse(await readFile(packageFile, 'utf8')).version;
   if (options.version) { console.log(packageVersion); return; }
   if (options.help) {
-    console.log('Design to Handoff\n\ndesign-to-handoff          Interactive multi-select installation\ndesign-to-handoff update   Check stable releases and update installed agents\ndesign-to-handoff --version\n\n--agents codex,claude-code,codebuddy,cursor,opencode\n--scope global|project\n--root <absolute custom user/project root>\n--dry-run  Check and print plan without writing\n--yes      Confirm installation, backing up existing same-name skills\n\nUpdate reuses installed targets without asking again. Downloads only when a newer CLI is released.\nNode.js >=22.20.0 with npm. No Git or Python required.');
+    console.log('Design to Handoff\n\ndesign-to-handoff          Interactive multi-select installation\ndesign-to-handoff update   Check stable releases and update installed agents\ndesign-to-handoff --version\n\n--agents codex,claude-code,codebuddy,cursor,opencode,workbuddy\n--scope global|project\n--root <absolute custom user/project root>\n--dry-run  Check and print plan without writing\n--yes      Confirm installation, backing up existing same-name skills\n\nUpdate reuses installed targets without asking again. Downloads only when a newer CLI is released.\nNode.js >=22.20.0 with npm. No Git or Python required.');
     return;
   }
   if (!['global', 'project'].includes(options.scope)) throw new Error('scope must be global or project');
@@ -85,7 +85,7 @@ async function main() {
           const directory = globalPackageDirectory(prefix);
           const actual = JSON.parse(await readFile(path.join(directory, 'package.json'), 'utf8'));
           if (actual.name !== 'design-to-handoff' || actual.version !== version) throw new Error('下载版本不匹配，尚未更改技能目录。');
-          const args = ['install', '--installed-only', '--yes', '--agents', [...new Set(targets.map(a => a.id))].join(','), '--scope', options.scope];
+          const args = ['install', '--installed-only', '--yes', '--agents', [...new Set(targets.flatMap(a => a.agentIds || [a.id]))].join(','), '--scope', options.scope];
           if (options.root) args.push('--root', root);
           await runNode(path.join(directory, 'bin', 'install.mjs'), args, { signal: controller.signal });
         },
@@ -108,7 +108,8 @@ async function main() {
     controller.signal.throwIfAborted();
     if (!selected.length) { console.log('Cancelled; nothing installed.'); return; }
     const plan = buildPlan(selected, planOptions);
-    console.log(`\n将为 ${plan.length} 个智能体安装 design-to-handoff 单入口（${SKILLS.length} 个技能）：`);
+    const selectedCount = plan.flatMap(a => a.agentIds || [a.id]).length;
+    console.log(`\n将为 ${selectedCount} 个智能体安装 design-to-handoff 单入口（${SKILLS.length} 个技能，${plan.length} 个安装位置）：`);
     plan.forEach(a => console.log(`  ${a.label}: ${a.directory}`));
     const conflicts = await findConflicts(plan);
     controller.signal.throwIfAborted();
