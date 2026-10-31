@@ -16,7 +16,7 @@ spec = importlib.util.spec_from_file_location('delivery', SCRIPT)
 module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(module)
 
-skills = sorted((ROOT / 'skills').iterdir())
+skills = sorted(p for p in (ROOT / 'skills').iterdir() if p.is_dir())
 assert len(skills) == 1
 for skill in skills:
     meta = yaml.safe_load((skill / 'agents/openai.yaml').read_text())['interface']
@@ -59,7 +59,11 @@ def case(name, mutate, expected):
     cases.append({'name': name, 'exit_code': code, 'status': result['status']})
 
 case('complete_record', lambda d: None, 0)
-case('penpot_self_host_record', lambda d: d.update(platform='penpot', url='https://design.example.org/#/workspace?file-id=123'), 0)
+case('ardot_record', lambda d: d.update(platform='ardot', url='https://ardot.tencent.com/design/example'), 0)
+case('ardot_wrong_host', lambda d: d.update(platform='ardot', url='https://example.org/design/example'), 1)
+case('ardot_mcp_is_not_file', lambda d: d.update(platform='ardot', url='https://ardot.tencent.com/mcp'), 1)
+case('ardot_home_is_not_file', lambda d: d.update(platform='ardot', url='https://ardot.tencent.com/'), 1)
+case('retired_platform', lambda d: d.update(platform='penpot', url='https://design.example.org/file/123'), 1)
 case('second_viewer_pending', lambda d: d['checks']['viewer_access'].update(status='pending', evidence=''), 2)
 case('code_copy_pending', lambda d: d['checks']['code_inspection'].update(status='pending', evidence=''), 2)
 case('missing_required_screen', lambda d: d['expected_views'].append('home-error-desktop'), 1)
@@ -91,5 +95,5 @@ with tempfile.TemporaryDirectory() as td:
 report = {'skills_validated': len(skills), 'relative_links': 'passed',
           'ui_metadata': 'passed', 'encoding': 'passed',
           'evidence_cases': cases, 'invalid_roots': 4, 'cli_cases': 2,
-          'live_figma': 'not_run', 'live_penpot': 'not_run', 'second_account': 'not_run'}
+          'live_figma': 'not_run', 'live_ardot': 'not_run', 'second_account': 'not_run'}
 print(json.dumps({'skills_validated': 1, 'scenario_checks': len(cases)+6, 'status': 'passed'}))

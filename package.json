@@ -1,6 +1,6 @@
 {
   "name": "design-to-handoff",
-  "version": "0.8.1",
+  "version": "0.9.0",
   "private": true,
   "description": "Single-entry design handoff skill with native questions across agent hosts",
   "type": "module",

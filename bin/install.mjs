@@ -131,7 +131,7 @@ async function main() {
     console.log(`\n安装完成：${result.agents.length} 个智能体，${result.installed} 个技能目录。`);
     if (result.retired) console.log(`已将 ${result.retired} 个旧子入口移出技能目录并保存备份。`);
     if (result.backups.length) console.log('备份目录：\n' + [...new Set(result.backups.map(p => path.dirname(p)))].join('\n'));
-    console.log('请刷新或重启智能体。Codex 使用 $design-to-handoff；Claude Code 使用 /design-to-handoff；其他宿主可直接说“使用 design-to-handoff”。\nFigma/Penpot MCP 由各使用者自行连接，本安装器不写入账号和授权配置。');
+    console.log('请刷新或重启智能体。Codex 使用 $design-to-handoff；Claude Code 使用 /design-to-handoff；其他宿主可直接说“使用 design-to-handoff”。\nFigma/Ardot MCP 由各使用者自行连接，本安装器不写入账号和授权配置。');
   } finally {
     process.removeListener('SIGINT', requestCancel);
     if (terminal) {

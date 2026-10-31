@@ -1,4 +1,4 @@
 interface:
   display_name: "需求到设计交付"
-  short_description: "逐步确定需求与全局设计基础，保存统一规范并交付 Figma 或 Penpot"
+  short_description: "逐步确定需求与全局设计基础，保存统一规范并交付 Figma 或 Ardot"
   default_prompt: "请使用 $design-to-handoff 完成本次设计工作，通过内置问答收集缺失信息，在参考之后将相近基础参数合并问答、不同维度分开，或采用推荐值，保存可复用的项目规范；同站扩展先继承规范，回答后自动继续。"

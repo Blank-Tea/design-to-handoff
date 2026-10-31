@@ -14,7 +14,7 @@
 - references：结论、证据、实测/估计、是否采纳。
 - localSave：是否保留、用户目录。
 - platforms / deliveries：平台题 pending/selected/deferred、实际选择回答；不能把未连接视为暂不上传；deliveryMode（new/append/update）；目标类型、账号/团队、projectId/fileId/pageId/nodeId 与真实链接。
-- connection：每个平台 discovery_pending/needs_auth/awaiting_user/account_ready/target_ready/blocked 状态、真实声明标识与连接器匹配来源、原生连接调用/返回状态、具体阻塞类别、浏览器是否打开、用户完成事件、实际只读探测与可用写入路由；Penpot key 只记录“已配置/待配置”，不记录值或含凭证 URL。
+- connection：每个平台 discovery_pending/needs_auth/awaiting_user/account_ready/target_ready/blocked 状态、真实声明标识与连接器匹配来源、原生连接调用/返回状态、具体阻塞类别、浏览器是否打开、用户完成事件、实际只读探测与可用写入路由；另记录所选平台说明/宿主必需技能的读取结果、remote/desktop 路线及配置/探测结果，不记录 OAuth 凭证或含凭证 URL。
 - plannedChanges / baseline / createdIds：本次追加/更新范围、既有内容基线、成功节点与待补 viewId；用于防覆盖及中断续传。
 
 ## 正式设计文档

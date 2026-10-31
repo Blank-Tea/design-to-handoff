@@ -22,8 +22,8 @@ def validate(data):
     if data.get("schema_version") != 1:
         errors.append("schema_version must be 1")
     platform = data.get("platform")
-    if platform not in ("figma", "penpot"):
-        errors.append("platform must be figma or penpot")
+    if platform not in ("figma", "ardot"):
+        errors.append("platform must be figma or ardot")
     url = data.get("url", "")
     try:
         parsed = urlsplit(url) if isinstance(url, str) else urlsplit("")
@@ -33,6 +33,11 @@ def validate(data):
             errors.append("url must not contain credentials")
         if platform == "figma" and (parsed.hostname not in ("figma.com", "www.figma.com") or not parsed.path.startswith("/design/")):
             errors.append("Figma delivery must link to a Design file")
+        # Ardot file URL formats are not a stable public contract. Check the
+        # official host and reject known non-file destinations; live readback
+        # still establishes the actual file/node identity.
+        if platform == "ardot" and (parsed.hostname != "ardot.tencent.com" or parsed.path.rstrip("/") in ("", "/mcp")):
+            errors.append("Ardot delivery must link to a remote file on ardot.tencent.com")
     except ValueError:
         errors.append("url is malformed")
 
